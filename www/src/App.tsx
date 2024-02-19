@@ -1,24 +1,33 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import LoginPage from './LoginPage';
+import ChatPage from './ChatPage';
+
+type AppState = {
+  currentPage: string;
+}
 
 function App() {
+  let [state, setState] = React.useState<AppState>({currentPage: "home"});
+
+  let renderPage;
+  if (state.currentPage === "home") {
+    renderPage = <LoginPage/>
+  } else if (state.currentPage === "chat") {
+    renderPage = <ChatPage/>
+  }else {
+    renderPage = <div>Not Found</div>
+  } 
+
   return (
     <div className="App">
+      <Header/>
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        {renderPage}
       </header>
+      <Footer/>
     </div>
   );
 }
