@@ -5,16 +5,32 @@ import Footer from './components/Footer';
 import LoginPage from './LoginPage';
 import ChatPage from './ChatPage';
 
-type AppState = {
-  currentPage: string;
+export type UserInfo = {
+  id: number,
+  name: string,
+  password: string,
+  description: string,
 }
 
+export type AppState = {
+  currentPage: string,
+  currentUser: UserInfo|null,
+}
+
+export type StateProps = {
+    state: AppState,
+    setState: React.Dispatch<React.SetStateAction<AppState>>
+}    
+
 function App() {
-  let [state, setState] = React.useState<AppState>({currentPage: "chat"});
+  let [state, setState] = React.useState<AppState>({
+    currentPage: "home", 
+    currentUser: null
+  });
 
   let renderPage;
   if (state.currentPage === "home") {
-    renderPage = <LoginPage/>
+    renderPage = <LoginPage state={state} setState={setState}/>
   } else if (state.currentPage === "chat") {
     renderPage = <ChatPage/>
   }else {
