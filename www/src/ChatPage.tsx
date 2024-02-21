@@ -1,8 +1,16 @@
+import Grid from "@mui/joy/Grid";
+import ChatPanel from "./ChatPanel";
+import ActivityPanel from "./ActivityPanel";
+
+
 function ChatPage () {
     return (
-        <div>
-            <h1>Chat Page</h1>
-        </div>
+        <Grid container spacing={1} sx={{
+            flexGrow: 1,            
+        }}>
+            <ChatPanel/>
+            <ActivityPanel/>
+        </Grid>
     )
 }
 

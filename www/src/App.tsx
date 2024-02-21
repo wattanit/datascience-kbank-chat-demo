@@ -10,7 +10,7 @@ type AppState = {
 }
 
 function App() {
-  let [state, setState] = React.useState<AppState>({currentPage: "home"});
+  let [state, setState] = React.useState<AppState>({currentPage: "chat"});
 
   let renderPage;
   if (state.currentPage === "home") {
