@@ -4,6 +4,7 @@ import Sheet from "@mui/joy/Sheet";
 import Button from "@mui/joy/Button";
 import Switch from '@mui/joy/Switch';
 import Typography from '@mui/joy/Typography';
+import Markdown from 'react-markdown'
 import { StateProps } from "./App";
 
 function ChatPanelToolbar(props: {newChat: ()=>void,showActivity: boolean, setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
@@ -99,7 +100,9 @@ function ChatBoxSystem(props: {data: ChatMessage}) {
             lineHeight: '1.5',
             alignSelf: "flex-start",
         }}>
-            {props.data.message}
+            <Markdown>
+                {props.data.message}
+            </Markdown>
         </Sheet>
     )
 }
@@ -143,11 +146,18 @@ function ChatPanel (props: StateProps & {
     showActivity: boolean, 
     setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
     let [messages, setMessages] = useState<ChatMessage[]>([]);
-    
+    let [chatTick, setChatTick] = useState<number>(0); // to force re-render
     let [chatStatus, setChatStatus] = useState<string>("init");
 
-    const understandingTimerRef = useRef<NodeJS.Timeout>();
-    const responseTimerRef = useRef<NodeJS.Timeout>();
+    let monitor = ()=>{
+        if (chatStatus === "ask_context") {
+            getContext();
+        } else if (chatStatus === "ask_promotion") {
+            getPromotion();
+        } else if (chatStatus === "ask_response") {
+            getResponse();
+        }
+    }
 
     let newChat = ()=>{
         let userName = props.state.currentUser?.name;
@@ -165,12 +175,14 @@ function ChatPanel (props: StateProps & {
         .then(response => {return response.json()})
         .then(data => {
             props.setChatId(data.id);
+
             setChatStatus("done");
         })
     }
 
     let addMessage = (newMessage: string) => {
-        let newMessages = [...messages, {type: "user", message: newMessage}];
+        let oldMessages = messages;
+        let newMessages = [...oldMessages, {type: "user", message: newMessage}];
         setMessages(newMessages);
 
         // send message to server
@@ -187,14 +199,15 @@ function ChatPanel (props: StateProps & {
         .then(response => {return response.json()})
         .then(data => {
             setChatStatus("ask_context");
-
-            understandingTimerRef.current = setInterval(()=>{
-                getContext();
-            }, 1000);
         })
     }
 
     let getContext = ()=>{
+        if (chatStatus !== "ask_context") {
+            return;
+        }
+        console.log("get context");
+
         fetch('/api/chat/:id/get_context?id='+props.chatId, {
             method: 'GET',
             headers: {
@@ -205,27 +218,30 @@ function ChatPanel (props: StateProps & {
         .then(data => {
             console.log(data);
             if (data.action === "context_found") {
-                clearInterval(understandingTimerRef.current);
                 setChatStatus("ask_promotion");
-                getPromotion();
             }else if (data.action === "follow_up_question") {
-                clearInterval(understandingTimerRef.current);
                 setChatStatus("done");
-                let newMessages = [...messages, {type: "bot", message: data.message}];
+                let oldMessages = messages;
+                let newMessages = [...oldMessages, {type: "bot", message: data.message}];
                 setMessages(newMessages);
             }else if (data.action === "running") {
                 // do nothing
             }else{
-                console.log(data);
-                clearInterval(understandingTimerRef.current);
                 setChatStatus("done");
-                let newMessages = [...messages, {type: "bot", message: "ขอโทษค่ะ ไม่เข้าใจคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                let oldMessages = messages;
+                let newMessages = [...oldMessages, {type: "bot", message: "ขอโทษค่ะ ไม่เข้าใจคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
                 setMessages(newMessages);
             }
         })
     }
 
     let getPromotion = ()=>{
+        if (chatStatus !== "ask_promotion") {
+            return;
+        }
+        setChatStatus("done");
+        console.log("get promotion");
+
         fetch('/api/chat/:id/get_promotions?id='+props.chatId, {
             method: 'GET',
             headers: {
@@ -237,18 +253,21 @@ function ChatPanel (props: StateProps & {
             console.log(data);
             if (data.action === "promotions found") {
                 setChatStatus("ask_response");
-                responseTimerRef.current = setInterval(()=>{
-                    getResponse();
-                }, 1000);
             }else{
                 setChatStatus("done");
-                let newMessages = [...messages, {type: "bot", message: "ขอโทษค่ะ ไม่พบโปรโมชั่นที่ตรงกับคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                let oldMessages = messages;
+                let newMessages = [...oldMessages, {type: "bot", message: "ขอโทษค่ะ ไม่พบโปรโมชั่นที่ตรงกับคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
                 setMessages(newMessages);
             }
         })
     }
 
     let getResponse = ()=>{
+        if (chatStatus !== "ask_response") {
+            return;
+        }
+        console.log("get response");
+
         fetch('/api/chat/:id/get_response?id='+props.chatId, {
             method: 'GET',
             headers: {
@@ -259,7 +278,6 @@ function ChatPanel (props: StateProps & {
         .then(data => {
             console.log(data);
             if (data.status === "done") {
-                clearInterval(responseTimerRef.current);
                 setChatStatus("done");
 
                 // get last message with type "bot" and add new message
@@ -267,32 +285,41 @@ function ChatPanel (props: StateProps & {
                 let latest_bot_message = bot_messages[bot_messages.length-1];
                 console.log(latest_bot_message);
 
-                let newMessages = [...messages, {type: "bot", message: latest_bot_message.message}];
+                let oldMessages = messages;
+                let newMessages = [...oldMessages, {type: "bot", message: latest_bot_message.message}];
                 setMessages(newMessages);
 
             }else if (data.status === "running") {
                 // do nothing
             }else{
-                clearInterval(responseTimerRef.current);
                 setChatStatus("done");
-                let newMessages = [...messages, {type: "bot", message: "ขอโทษค่ะ พูดจาไม่เข้าใจตอนนี้ค่ะ"}];
+                let oldMessages = messages;
+                let newMessages = [...oldMessages, {type: "bot", message: "ขอโทษค่ะ ตอนนี้ระบบไม่สามารถให้ข้อมูลได้ คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
                 setMessages(newMessages);
             }
         })
     }
 
     useEffect(()=>{
-        // newChat();
+        if (chatStatus === "init"){
+            newChat();
+        }
+        
+        monitor();
+        setTimeout(()=>{
+            if (chatTick < 1000000) {
+                setChatTick(chatTick+1);
+            }else{
+                setChatTick(0);
+            }
+        }, 1500);
 
         return ()=>{
-            if (understandingTimerRef.current) {
-                clearInterval(understandingTimerRef.current);
-            }
-            if (responseTimerRef.current) {
-                clearInterval(responseTimerRef.current);
-            }
+            // if (monitoringIntervalRef.current) {
+            //     clearInterval(monitoringIntervalRef.current);
+            // }
         }
-    }, []);
+    }, [chatTick]);
     
     return (
         <Grid xs={12} md={(props.showActivity)?8:12} sx={{

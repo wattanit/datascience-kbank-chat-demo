@@ -126,6 +126,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
             })
 
         if response.status_code != 200:
+            print(response)
             raise HTTPException(status_code=500, detail="OpenAI message creation failed")
 
         # call OpenAI to create a new run
@@ -141,6 +142,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
                 })
 
             if response.status_code != 200:
+                print(response)
                 raise HTTPException(status_code=500, detail="OpenAI run creation failed")
 
             response = response.json()
@@ -179,6 +181,7 @@ async def get_chat_context(id: int):
                     })
 
                 if response.status_code != 200:
+                    print(response)
                     raise HTTPException(status_code=500, detail="OpenAI run status failed")
 
                 response = response.json()
@@ -199,6 +202,7 @@ async def get_chat_context(id: int):
                         })
 
                     if response.status_code != 200:
+                        print(response)
                         raise HTTPException(status_code=500, detail="OpenAI message retrieval failed")
 
                     response = response.json()
@@ -305,7 +309,8 @@ async def get_chat_promotions(id: int):
         raise HTTPException(status_code=404, detail="Chat not found")
     else:
         # get last user message
-        last_user_message = next((message for message in chat["chat_messages"] if message["type"] == "user"), None)
+        last_user_message = [m for m in chat["chat_messages"] if m["type"]=="user"][-1]
+        # last_user_message = next((message for message in chat["chat_messages"] if message["type"] == "user"), None)
         if last_user_message is None:
             return {
                 "action": "promotions not found",
@@ -323,7 +328,7 @@ async def get_chat_promotions(id: int):
         else:
             first_thing = None
 
-        q1 = last_user_message
+        q1 = last_user_message["message"]
         q2 = first_thing
 
         new_assistant_log = {
@@ -336,6 +341,7 @@ async def get_chat_promotions(id: int):
         response = requests.get("http://localhost:8001/api/search", params={"q1": q1, "q2": q2})
 
         if response.status_code != 200:
+            print(response)
             raise HTTPException(status_code=500, detail="Promotion search engine failed")
 
         response = response.json()
@@ -357,6 +363,7 @@ async def get_chat_promotions(id: int):
 
             promotions = response["result"]
             promotion_text = json.dumps(response["result"])
+            print(promotions)
             data = {
                 "role": "user",
                 "content": promotion_text
@@ -368,7 +375,8 @@ async def get_chat_promotions(id: int):
                 })
 
             if response.status_code != 200:
-                raise HTTPException(status_code=500, detail="OpenAI message creation failed")
+                print(response)
+                raise HTTPException(status_code=500, detail="OpenAI message creation failed [add promotions]")
 
             # create a new run using Response Agent
             data = {
@@ -381,7 +389,8 @@ async def get_chat_promotions(id: int):
                 })
 
             if response.status_code != 200:
-                raise HTTPException(status_code=500, detail="OpenAI run creation failed")
+                print(response)
+                raise HTTPException(status_code=500, detail="OpenAI run creation failed [response agent]")
 
             response = response.json()
             chat["openai_run_id"].append(response["id"])
@@ -423,6 +432,7 @@ async def get_chat_response(id: int):
                 })
             
             if response.status_code != 200:
+                print(response)
                 raise HTTPException(status_code=500, detail="OpenAI run status failed")
             
             response = response.json()
