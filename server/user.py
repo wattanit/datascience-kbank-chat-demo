@@ -1,21 +1,8 @@
 from fastapi import APIRouter
 import json
+from server.db import load_users, find_user
 
 router = APIRouter()
-
-#### DATABASE SIMULATION ####
-# load user data from data/users.json, simulating a database
-def load_users():
-    with open('data/users.json') as f:
-        users = json.load(f)
-    return users
-
-async def find_user(id: int):
-    users = load_users()
-    user = next((user for user in users if user["id"] == id), None)
-    return user
-
-#############################
 
 @router.get("/api/users")
 async def get_users():
