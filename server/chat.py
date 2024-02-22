@@ -149,7 +149,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
             chat["status"] = "running"
             new_assistant_log = {
                 "type": "run_created",
-                "message": "New run created: id={}".format(response["id"])
+                "message": "Thinking of a relevant context. New run created: id={}".format(response["id"])
             }
             chat["assistant_logs"].append(new_assistant_log)
             await update_chat(chat)
@@ -326,10 +326,19 @@ async def get_chat_promotions(id: int):
         q1 = last_user_message
         q2 = first_thing
 
-        # query for promotions
-        response = {
-            "result": []
+        new_assistant_log = {
+            "type": "promotions_query",
+            "message": "Querying promotions: q1={}, q2={}".format(q1, q2)
         }
+        chat["assistant_logs"].append(new_assistant_log)
+        
+        # query for promotions
+        response = requests.get("http://localhost:8001/api/search", params={"q1": q1, "q2": q2})
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Promotion search engine failed")
+
+        response = response.json()
         
         if len(response["result"]) == 0:
             return {
@@ -337,9 +346,16 @@ async def get_chat_promotions(id: int):
                 "promotions": ""
             }
         else:
+            new_assistant_log = {
+                "type": "promotions_found",
+                "message": json.dumps(response["result"])
+            }
+            chat["assistant_logs"].append(new_assistant_log)
+
             # add promotions to OpenAI thread
             thread_id = chat["openai_thread_id"]
 
+            promotions = response["result"]
             promotion_text = json.dumps(response["result"])
             data = {
                 "role": "user",
@@ -370,11 +386,17 @@ async def get_chat_promotions(id: int):
             response = response.json()
             chat["openai_run_id"].append(response["id"])
             chat["status"] = "running"
+
+            new_assistant_log = {
+                "type": "run_created",
+                "message": "Thinking of a nice response text. New run created: id={}".format(response["id"])
+            }
+            chat["assistant_logs"].append(new_assistant_log)
             await update_chat(chat)
 
             return {
                 "action": "promotions found",
-                "promotions": response["result"]
+                "promotions": promotions
             }
             
 @router.get("/api/chat/:id/get_response")
@@ -383,7 +405,6 @@ async def get_chat_response(id: int):
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
     else:
-        
         if chat["status"] == "running":
             # get running status
             if len(chat["openai_run_id"])==0:
@@ -405,7 +426,13 @@ async def get_chat_response(id: int):
                 raise HTTPException(status_code=500, detail="OpenAI run status failed")
             
             response = response.json()
-            if response["status"] == "complete":
+            if response["status"] == "completed":
+                new_assistant_log = {
+                    "type": "run_complete",
+                    "message": "Run complete: id={}".format(run_id)
+                }
+                chat["assistant_logs"].append(new_assistant_log)
+
                 # retrieve response messages
                 response = requests.get(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', headers={
                     'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
@@ -427,6 +454,10 @@ async def get_chat_response(id: int):
                         "message": message
                     }
                     chat["chat_messages"].append(new_chat_message)
+                    new_assistant_log = {
+                        "type": "response_message",
+                        "message": "Response message added: {}".format(message)
+                    }
                     chat["status"] = "done"
                     await update_chat(chat)
 
