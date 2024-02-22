@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "kbank-credit-chat-demo"
+version = "0.1.0"
+description = ""
+authors = ["Wattanit Hotrakool <wattanit.ho@tnds.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+uvicorn = "^0.27.1"
+fastapi = "^0.109.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
