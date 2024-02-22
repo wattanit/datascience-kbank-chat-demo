@@ -5,6 +5,7 @@
         "openai_thread_id": "1234567890",
         "chat_messages": [],
         "assistant_logs": [],
-        "status": "done"
+        "status": "done",
+        "openai_run_id": []
     }
 ]

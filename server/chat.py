@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 import requests
-from server.db import load_chats, save_chats, find_chat, create_chat, update_chat
+from server.db import load_chats, save_chats, find_chat, create_chat, update_chat, find_user
 from server.db import delete_chat as delete_chat_from_db
 from server.agent import process_chat
 
@@ -67,38 +67,55 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
     else:
-        run_context_agent = 
-        process_chat(body.message, chat)
+        # get user data
+        user_id = body.user_id
+        user = await find_user(user_id)
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
 
-        # new_chat_message = {
-        #     "type": "user",
-        #     "message": body.message
-        # }
-        # chat["chat_messages"].append(new_chat_message)
+        # save user message
+        new_chat_message = {
+            "type": "user",
+            "message": body.message
+        }
+        chat["chat_messages"].append(new_chat_message)
 
-        # # call OpenAI to add the message
-        # data = {
-        #     "role": "user",
-        #     "content": body.message
-        # }
-        # response = requests.post(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', data=json.dumps(data), headers={
-        #     'Content-Type': 'application/json',
-        #     'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
-        #     'OpenAI-Beta': 'assistants=v1'
-        #     })
+        # call OpenAI to add the message
+        data = {
+            "role": "user",
+            "content": body.message
+        }
+        response = requests.post(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', data=json.dumps(data), headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+            'OpenAI-Beta': 'assistants=v1'
+            })
 
-        # if response.status_code != 200:
-        #     raise HTTPException(status_code=500, detail="OpenAI message creation failed")
-        
-        # response = response.json()
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail="OpenAI message creation failed")
 
-        # if chat["status"] == "done":
-        #     chat["status"] = "running"
+        # call OpenAI to create a new run
+        if chat["status"] == "done":
+            thread_id = chat["openai_thread_id"]
+            C = {
+                "assistant_id": os.getenv("OPENAI_UNDERSTANDING_AGENT_ID")
+            }
+            response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/runs', data=json.dumps(data), headers={
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+                'OpenAI-Beta': 'assistants=v1'
+                })
 
-        #     # call OpenAI to create a new run
+            if response.status_code != 200:
+                raise HTTPException(status_code=500, detail="OpenAI run creation failed")
 
-        # await update_chat(chat)
-        # return new_chat_message
+            response = response.json()
+
+            chat["openai_run_id"].append(response["id"])
+            chat["status"] = "waiting"
+            await update_chat(chat)
+
+        return new_chat_message
 
 @router.get("/api/chat/:id/assistant")
 async def get_chat_assistant(id: int):
