@@ -1,7 +1,8 @@
+import { useState} from "react";
 import Grid from "@mui/joy/Grid";
 import { Sheet, Typography } from "@mui/joy";
 
-function ActivityItem () {
+function ActivityItem (props: {report: ActivityReport}) {
     return (
         <Sheet sx={{
             maxWidth: "90%",
@@ -10,12 +11,18 @@ function ActivityItem () {
             borderRadius: "0.5rem",
             border: "0.1rem solid rgba(1,200,50, 0.5)",
         }}>
-            Activity report
+            <b>{props.report.type}&nbsp;:&nbsp;</b>
+            {props.report.message}
         </Sheet> 
     )
 }
 
-function ActivityWindow() {
+function ActivityWindow(props: {activityReports: ActivityReport[]}) {
+
+    let renderActivityItems = props.activityReports.map((report, index)=>{
+        return <ActivityItem key={index} report={report}/>
+    });
+
     return (
         <Sheet sx={{
             flexGrow: 1,
@@ -29,22 +36,30 @@ function ActivityWindow() {
             maxHeight: "80vh",
             width: "100%",
         }}>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
-            <ActivityItem/>
+            {renderActivityItems}
         </Sheet>
     )
 }
 
+type ActivityReport = {
+    type: string, // should be "system" or "AI"
+    message: string,
+}
+
 function ActivityPanel () {
+    let exampleActivityReports: ActivityReport[] = [
+        {
+            type: "system",
+            message: "User logged in"
+        },
+        {
+            type: "AI",
+            message: "AI started"
+        },
+    ]
+
+    let [activityReports, setActivityReports] = useState<ActivityReport[]>(exampleActivityReports)
+
     return (
         <Grid xs={12} md={4} sx={{            
             paddingLeft: "1rem",
@@ -57,7 +72,7 @@ function ActivityPanel () {
             <Typography level="h2" fontSize="xl" sx={{ mb: 0.5 }}>
                 AI Activity Report
             </Typography>
-            <ActivityWindow/>
+            <ActivityWindow activityReports={activityReports}/>
         </Grid>
     )
 }
