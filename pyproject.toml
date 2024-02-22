@@ -12,6 +12,9 @@ fastapi = "^0.109.2"
 pydantic = "^2.6.1"
 python-dotenv = "^1.0.1"
 requests = "^2.31.0"
+openai = "^1.12.0"
+numpy = "^1.26.4"
+pandas = "^2.2.0"
 
 [build-system]
 requires = ["poetry-core"]
