@@ -1,7 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 import json
 from pydantic import BaseModel
 from server.db import load_chats, save_chats, find_chat, create_chat, update_chat
+from dotenv import load_dotenv
+import os
+from server.agent import process_chat
+import concurrent.futures
+
+load_dotenv()
+print("LOADED API KEYS: {}".format(os.getenv("OPENAI_API_KEY")))
+print("UNDERSTANDING AGENT ID: {}".format(os.getenv("OPENAI_UNDERSTANDING_AGENT_ID")))
+print("RESPONSE AGENT ID: {}".format(os.getenv("OPENAI_RESPONSE_AGENT_ID")))
 
 router = APIRouter()
 
@@ -34,7 +43,7 @@ class NewChatMessagePayload(BaseModel):
     message: str
 
 @router.post("/api/chat/:id/message")
-async def create_chat_message(id: int, body: NewChatMessagePayload):
+async def create_chat_message(id: int, body: NewChatMessagePayload, background_tasks: BackgroundTasks):
     chat = await find_chat(id)
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -45,14 +54,9 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
         }
         chat["chat_messages"].append(new_chat_message)
         await update_chat(chat)
-        return new_chat_message
 
-async def append_chat_message(chat_id: int, message_type: str, message: str):
-    chat = await find_chat(chat_id)
-    if chat is None:
-        raise HTTPException(status_code=404, detail="Chat not found")
-    else:
-        return chat
+        background_tasks.add_task(process_chat,chat)
+        return new_chat_message
 
 @router.get("/api/chat/:id/assistant")
 async def get_chat_assistant(id: int):

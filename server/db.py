@@ -20,7 +20,7 @@ def load_chats():
 
 def save_chats(chats):
     with open('data/chats.json', 'w') as f:
-        json.dump(chats, f)
+        json.dump(chats, f, indent=4)
 
 async def find_chat(id: int) -> dict|None:
     chats = load_chats()
