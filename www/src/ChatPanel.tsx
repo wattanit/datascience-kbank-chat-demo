@@ -107,6 +107,29 @@ function ChatBoxSystem(props: {data: ChatMessage}) {
     )
 }
 
+function ChatBoxInfo(props: {data: ChatMessage}) {
+    return (
+        <Sheet sx={{
+            flexGrow: 0,
+            marginTop: "1rem",
+            border: "1px solid #ddd",
+            borderRadius: '15px',
+            padding: '10px',
+            backgroundColor: '#dde0dd',
+            boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+            maxWidth: '70%',
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '16px',
+            lineHeight: '1.5',
+            alignSelf: "flex-start",
+        }}>
+            <Markdown>
+                {props.data.message}
+            </Markdown>
+        </Sheet>
+    )
+}
+
 type ChatMessage = {
     type: string,
     message: string,
@@ -120,7 +143,7 @@ function ChatWindow(props: {messages: ChatMessage[]}) {
         } else if (message.type === "bot") {
             return <ChatBoxSystem key={index} data={message}/>
         } else {
-            return <ChatBoxSystem key={index} data={message}/>
+            return <ChatBoxInfo key={index} data={message}/>
         }
     });
 
@@ -161,7 +184,7 @@ function ChatPanel (props: StateProps & {
 
     let newChat = ()=>{
         let userName = props.state.currentUser?.name;
-        let welcomeMessage = (userName)?{type: "system", message: "สวัสดีค่ะ คุณ"+userName+" มีอะไรให้ช่วยคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
+        let welcomeMessage = (userName)?{type: "bot", message: "สวัสดีค่ะ คุณ"+userName+" สนใจหาโปรโมชั่นสำหรับโอกาสไหนคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
         setMessages([welcomeMessage]);
 
         // create new thread
@@ -252,6 +275,9 @@ function ChatPanel (props: StateProps & {
         .then(data => {
             console.log(data);
             if (data.action === "promotions found") {
+                let oldMessages = messages;
+                let newMessages = [...oldMessages, {type: "system", message: "กำลังคัดเลือกโปรโมชั่นที่เหมาะสมที่สุดสำหรับคุณ"}];
+                setMessages(newMessages);
                 setChatStatus("ask_response");
             }else{
                 setChatStatus("done");
@@ -304,7 +330,7 @@ function ChatPanel (props: StateProps & {
         if (chatStatus === "init"){
             newChat();
         }
-        
+
         monitor();
         setTimeout(()=>{
             if (chatTick < 1000000) {
