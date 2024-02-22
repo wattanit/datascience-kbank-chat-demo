@@ -39,6 +39,14 @@ async def post_chat(body: NewChatPayload):
 
     new_chat = await create_chat(body.user_id, thread_id)
     print("Created new chat: {}".format(new_chat))
+
+    new_assistant_log = {
+        "type": "new_chat",
+        "message": "New chat created"
+    }
+    new_chat["assistant_logs"].append(new_assistant_log)
+    await update_chat(new_chat)
+
     return new_chat
 
 @router.get("/api/chat/:id")
@@ -90,6 +98,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
         # get user data
         user_id = body.user_id
         user = await find_user(user_id)
+        customer_segment = user["customer_segment"]
         if user is None:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -99,11 +108,16 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
             "message": body.message
         }
         chat["chat_messages"].append(new_chat_message)
+        new_assistant_log = {
+            "type": "user_message",
+            "message": "User message added: {}".format(body.message)
+        }
+        chat["assistant_logs"].append(new_assistant_log)
 
         # call OpenAI to add the message
         data = {
             "role": "user",
-            "content": body.message
+            "content": '{} [customer_segment: "{}"]'.format(body.message, customer_segment)
         }
         response = requests.post(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', data=json.dumps(data), headers={
             'Content-Type': 'application/json',
@@ -117,7 +131,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
         # call OpenAI to create a new run
         if chat["status"] == "done":
             thread_id = chat["openai_thread_id"]
-            C = {
+            data = {
                 "assistant_id": os.getenv("OPENAI_UNDERSTANDING_AGENT_ID")
             }
             response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/runs', data=json.dumps(data), headers={
@@ -133,6 +147,11 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
 
             chat["openai_run_id"].append(response["id"])
             chat["status"] = "running"
+            new_assistant_log = {
+                "type": "run_created",
+                "message": "New run created: id={}".format(response["id"])
+            }
+            chat["assistant_logs"].append(new_assistant_log)
             await update_chat(chat)
 
         return new_chat_message
@@ -163,9 +182,15 @@ async def get_chat_context(id: int):
                     raise HTTPException(status_code=500, detail="OpenAI run status failed")
 
                 response = response.json()
-                if response["status"] == "complete":
+
+                if response["status"] == "completed":
                     # update chat status to done
                     chat["status"] = "done"
+                    new_assistant_log = {
+                        "type": "run_complete",
+                        "message": "Run complete: id={}".format(run_id)
+                    }
+                    chat["assistant_logs"].append(new_assistant_log)
                     
                     # retrieve the run response from the last message of the thread
                     response = requests.get(f'https://api.openai.com/v1/threads/{thread_id}/messages', headers={
@@ -180,12 +205,11 @@ async def get_chat_context(id: int):
                     response_message = response["data"][0]
 
                     if response_message["role"] == "assistant":
-                        response_content = response_message["content"]
+                        response_content = response_message["content"][0]
                         if response_content["type"] == "text":
                             response_text = response_content["text"]
-
                             try:
-                                response_body = json.loads(response_text)
+                                response_body = json.loads(response_text["value"])
 
                                 # if assistant asks for a follow up question
                                 if "follow_up_question" in response_body:
@@ -414,7 +438,7 @@ async def get_chat_response(id: int):
             else:
                 return {
                     "status": "running",
-                    "message": chat["chat_messages"]
+                    "message": chat["chat_messages"],
                     "assistant_logs": chat["assistant_logs"]
                 }
 
