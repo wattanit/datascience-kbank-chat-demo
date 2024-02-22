@@ -42,7 +42,8 @@ async def create_chat(user_id: int, thread_id: str) -> dict:
         "user_id": user_id,
         "openai_thread_id": thread_id,
         "chat_messages": [],
-        "assistant_logs": []
+        "assistant_logs": [],
+        "status": "done"
         }
 
     chats.append(new_chat)

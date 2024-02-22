@@ -67,15 +67,38 @@ async def create_chat_message(id: int, body: NewChatMessagePayload, background_t
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found")
     else:
-        new_chat_message = {
-            "type": "user",
-            "message": body.message
-        }
-        chat["chat_messages"].append(new_chat_message)
-        await update_chat(chat)
+        run_context_agent = 
+        process_chat(body.message, chat)
 
-        background_tasks.add_task(process_chat,chat)
-        return new_chat_message
+        # new_chat_message = {
+        #     "type": "user",
+        #     "message": body.message
+        # }
+        # chat["chat_messages"].append(new_chat_message)
+
+        # # call OpenAI to add the message
+        # data = {
+        #     "role": "user",
+        #     "content": body.message
+        # }
+        # response = requests.post(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', data=json.dumps(data), headers={
+        #     'Content-Type': 'application/json',
+        #     'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+        #     'OpenAI-Beta': 'assistants=v1'
+        #     })
+
+        # if response.status_code != 200:
+        #     raise HTTPException(status_code=500, detail="OpenAI message creation failed")
+        
+        # response = response.json()
+
+        # if chat["status"] == "done":
+        #     chat["status"] = "running"
+
+        #     # call OpenAI to create a new run
+
+        # await update_chat(chat)
+        # return new_chat_message
 
 @router.get("/api/chat/:id/assistant")
 async def get_chat_assistant(id: int):
