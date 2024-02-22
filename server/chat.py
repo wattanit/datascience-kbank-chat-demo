@@ -353,6 +353,78 @@ async def get_chat_promotions(id: int):
                 "promotions": response["result"]
             }
             
+@router.get("/api/chat/:id/get_response")
+async def get_chat_response(id: int):
+    chat = await find_chat(id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    else:
+        
+        if chat["status"] == "running":
+            # get running status
+            if len(chat["openai_run_id"])==0:
+                chat["status"] = "done"
+                await update_chat(chat)
+                return {
+                    "status": "done",
+                    "message": chat["chat_messages"],
+                    "assistant_logs": chat["assistant_logs"]
+                }
+            run_id = chat["openai_run_id"][-1]
+
+            response = requests.get(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/runs/{run_id}', headers={
+                'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+                'OpenAI-Beta': 'assistants=v1'
+                })
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=500, detail="OpenAI run status failed")
+            
+            response = response.json()
+            if response["status"] == "complete":
+                # retrieve response messages
+                response = requests.get(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', headers={
+                    'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+                    'OpenAI-Beta': 'assistants=v1'
+                    })
+                
+                if response.status_code != 200:
+                    raise HTTPException(status_code=500, detail="OpenAI message retrieval failed")
+                
+                response = response.json()
+                response_message = response["data"][0]
+                response_content = response_message["content"][0]
+                if response_content["type"]=="text":
+                    message = response_content["text"]["value"]
+
+                    # add response to chat
+                    new_chat_message = {
+                        "type": "bot",
+                        "message": message
+                    }
+                    chat["chat_messages"].append(new_chat_message)
+                    chat["status"] = "done"
+                    await update_chat(chat)
+
+                    return {
+                        "status": "done",
+                        "message": chat["chat_messages"],
+                        "assistant_logs": chat["assistant_logs"]
+                    }
+            else:
+                return {
+                    "status": "running",
+                    "message": chat["chat_messages"]
+                    "assistant_logs": chat["assistant_logs"]
+                }
+
+        else:
+            return {
+                "status": "done",
+                "message": chat["chat_messages"],
+                "assistant_logs": chat["assistant_logs"]
+            }
+
 
 @router.get("/api/chat/:id/message")
 async def get_chat_messages(id: int):
