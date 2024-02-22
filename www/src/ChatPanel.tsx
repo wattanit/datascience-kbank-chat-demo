@@ -1,10 +1,12 @@
+import { useState } from "react";
 import Grid from "@mui/joy/Grid";
 import Sheet from "@mui/joy/Sheet";
 import Button from "@mui/joy/Button";
 import Switch from '@mui/joy/Switch';
 import Typography from '@mui/joy/Typography';
+import { StateProps } from "./App";
 
-function ChatPanelToolbar() {
+function ChatPanelToolbar(props: {newChat: ()=>void,showActivity: boolean, setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
     return (
         <Sheet sx={{
             display: "flex",
@@ -13,16 +15,20 @@ function ChatPanelToolbar() {
             alignItems: "center",
         }}>
             <Typography component={"label"} sx={{marginRight: "1rem"}} endDecorator={
-                <Switch color="neutral" variant="solid" checked={true}/> 
+                <Switch color="neutral" variant="solid" checked={props.showActivity} onChange={(e)=>{props.setShowActivity(e.target.checked)}}/> 
             }>
                 Show AI Activity ✨
             </Typography>
-            <Button color="success">เริ่มต้นคำถามใหม่</Button>
+            <Button color="success" onClick={()=>{
+                props.newChat();
+            }}>เริ่มต้นคำถามใหม่</Button>
         </Sheet>
     )
 }
 
-function ChatInputBar () {
+function ChatInputBar (props: {addMessage: (newMessage: string)=>void}) {
+    let [newMessage, setNewMessage] = useState("")
+
     return (
         <Sheet sx={{
             display: "flex",
@@ -38,16 +44,28 @@ function ChatInputBar () {
                 borderRadius: "15px",
                 fontSize: "16px",
                 fontFamily: "Arial, sans-serif",
-            }}/>
-            <Button color="success">ส่งข้อความ</Button>
+            }} value={newMessage} 
+               onChange={(e)=>{setNewMessage(e.target.value)}}
+               onKeyUp={(e)=>{
+                // e.preventDefault();
+                if (e.key === "Enter") {
+                    props.addMessage(newMessage);
+                    setNewMessage("");
+                }
+               }}
+            />
+            <Button color="success" onClick={()=>{
+                props.addMessage(newMessage);
+                setNewMessage("");
+            }}>ส่งข้อความ</Button>
         </Sheet>
     )
 }
 
-function ChatBoxUser() {
+function ChatBoxUser(props: {data: ChatMessage}) {
     return (
         <Sheet sx={{
-            flexGrow: 1,
+            flexGrow: 0,
             marginTop: "1rem",
             border: "1px solid #ddd",
             borderRadius: '15px',
@@ -60,15 +78,15 @@ function ChatBoxUser() {
             lineHeight: '1.5',
             alignSelf: "flex-end",
         }}>
-            User
+            {props.data.message}
         </Sheet>
     )
 }
 
-function ChatBoxSystem() {
+function ChatBoxSystem(props: {data: ChatMessage}) {
     return (
         <Sheet sx={{
-            flexGrow: 1,
+            flexGrow: 0,
             marginTop: "1rem",
             border: "1px solid #ddd",
             borderRadius: '15px',
@@ -81,12 +99,28 @@ function ChatBoxSystem() {
             lineHeight: '1.5',
             alignSelf: "flex-start",
         }}>
-            System
+            {props.data.message}
         </Sheet>
     )
 }
 
-function ChatWindow() {
+type ChatMessage = {
+    type: string,
+    message: string,
+}
+
+function ChatWindow(props: {messages: ChatMessage[]}) {
+
+    let renderMessages = props.messages.map((message, index)=>{
+        if (message.type === "user") {
+            return <ChatBoxUser key={index} data={message}/>
+        } else if (message.type === "bot") {
+            return <ChatBoxSystem key={index} data={message}/>
+        } else {
+            return <ChatBoxSystem key={index} data={message}/>
+        }
+    });
+
     return (
         <Sheet sx={{
             display: "flex",
@@ -96,37 +130,44 @@ function ChatWindow() {
             border: "1px solid #ddd",
             padding: '10px',
             backgroundColor: '#f9f9f9',
-            maxHeight: "60vh",
+            height: "60vh",
         }}>
-            <ChatBoxUser/>
-            <ChatBoxSystem/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxUser/>
-            <ChatBoxSystem/>
+            {renderMessages}
         </Sheet>
     )
 }
 
-function ChatPanel () {
+function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
+    let exampleMessages: ChatMessage[] = [
+        {type: "user", message: "สวัสดีครับ"},
+        {type: "system", message: "สวัสดีครับ มีอะไรให้ช่วยครับ"},
+        {type: "user", message: "ฉันอยากทราบราคาสินค้า"},
+        {type: "system", message: "ราคาสินค้าคือ 100 บาทครับ"},
+        {type: "user", message: "ขอบคุณครับ"},
+        {type: "system", message: "ยินดีครับ"},
+    ]
+
+    let [messages, setMessages] = useState(exampleMessages);
+
+    let addMessage = (newMessage: string) => {
+        let newMessages = [...messages, {type: "user", message: newMessage}];
+        setMessages(newMessages);
+    }
+
+    let newChat = ()=>{
+        let userName = props.state.currentUser?.name;
+        let welcomeMessage = (userName)?{type: "system", message: "สวัสดีค่ะ คุณ"+userName+" มีอะไรให้ช่วยคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
+        setMessages([welcomeMessage]);
+    }
+    
     return (
-        <Grid xs={12} md={8} sx={{
+        <Grid xs={12} md={(props.showActivity)?8:12} sx={{
             paddingLeft: "1rem",
             paddingRight: "1rem",
         }}>
-            <ChatPanelToolbar/>
-            <ChatWindow/>
-            <ChatInputBar/>
+            <ChatPanelToolbar newChat={newChat} showActivity={props.showActivity} setShowActivity={props.setShowActivity} />
+            <ChatWindow messages={messages}/>
+            <ChatInputBar addMessage={addMessage}/>
         </Grid>
     )
 }

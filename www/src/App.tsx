@@ -32,7 +32,7 @@ function App() {
   if (state.currentPage === "home") {
     renderPage = <LoginPage state={state} setState={setState}/>
   } else if (state.currentPage === "chat") {
-    renderPage = <ChatPage/>
+    renderPage = <ChatPage state={state} setState={setState}/>
   }else {
     renderPage = <div>Not Found</div>
   } 
