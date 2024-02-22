@@ -27,16 +27,20 @@ async def find_chat(id: int) -> dict|None:
     chat = next((chat for chat in chats if chat["id"] == id), None)
     return chat
 
-async def create_chat(user_id: int) -> dict:
+async def create_chat(user_id: int, thread_id: str) -> dict:
     # find the last chat id
     chats = load_chats()
-    last_chat = chats[-1]
-    last_chat_id = last_chat["id"]
-    new_chat_id = last_chat_id + 1
+    if len(chats)>0:
+        last_chat = chats[-1]
+        last_chat_id = last_chat["id"]
+        new_chat_id = last_chat_id + 1
+    else:
+        new_chat_id = 1
 
     new_chat = {
         "id": new_chat_id,
         "user_id": user_id,
+        "openai_thread_id": thread_id,
         "chat_messages": [],
         "assistant_logs": []
         }
@@ -49,4 +53,10 @@ async def update_chat(chat: dict):
     chats = load_chats()
     chat_index = next((index for (index, c) in enumerate(chats) if c["id"] == chat["id"]), None)
     chats[chat_index] = chat
+    save_chats(chats)
+
+async def delete_chat(id: int):
+    chats = load_chats()
+    chat_index = next((index for (index, c) in enumerate(chats) if c["id"] == id), None)
+    del chats[chat_index]
     save_chats(chats)

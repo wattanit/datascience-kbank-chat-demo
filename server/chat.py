@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 import json
 from pydantic import BaseModel
-from server.db import load_chats, save_chats, find_chat, create_chat, update_chat
 from dotenv import load_dotenv
 import os
+import requests
+from server.db import load_chats, save_chats, find_chat, create_chat, update_chat
+from server.db import delete_chat as delete_chat_from_db
 from server.agent import process_chat
-import concurrent.futures
 
 load_dotenv()
 print("LOADED API KEYS: {}".format(os.getenv("OPENAI_API_KEY")))
@@ -19,7 +20,25 @@ class NewChatPayload(BaseModel):
 
 @router.post("/api/chat")
 async def post_chat(body: NewChatPayload):
-    new_chat = await create_chat(body.user_id)
+    print("Creating new chat for user: {}".format(body.user_id))
+
+    # call OpenAI to create a new thread
+    response = requests.post('https://api.openai.com/v1/threads', data={}, headers={
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+        'OpenAI-Beta': 'assistants=v1'
+        })
+
+    if response.status_code != 200:
+        print(response.status_code)
+        raise HTTPException(status_code=500, detail="OpenAI thread creation failed")
+
+    response = response.json()
+    thread_id = response["id"]
+    print("Created OpenAI thread: {}".format(thread_id))
+
+    new_chat = await create_chat(body.user_id, thread_id)
+    print("Created new chat: {}".format(new_chat))
     return new_chat
 
 @router.get("/api/chat/:id")
@@ -65,3 +84,31 @@ async def get_chat_assistant(id: int):
         raise HTTPException(status_code=404, detail="Chat not found")
     else:
         return chat["assistant_logs"]
+
+@router.delete("/api/chat/:id")
+async def delete_chat(id: int):
+    chat = await find_chat(id)
+    if chat is None:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    else:
+        # call OpenAI delete thread
+        thread_id = chat["openai_thread_id"]
+        response = requests.delete(f'https://api.openai.com/v1/threads/{thread_id}', headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+            'OpenAI-Beta': 'assistants=v1'
+            })
+
+        if response.status_code != 200:
+            print(response.status_code)
+            return {}
+        
+        response = response.json()
+        if response["deleted"]:
+            print("Deleted OpenAI thread: {}".format(thread_id))
+
+        # delete chat from database
+        await delete_chat_from_db(id)
+        print("Deleted chat: {}".format(id))
+
+        return chat
