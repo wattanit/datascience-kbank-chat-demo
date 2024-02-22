@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Grid from "@mui/joy/Grid";
 import Sheet from "@mui/joy/Sheet";
 import Button from "@mui/joy/Button";
@@ -138,27 +138,157 @@ function ChatWindow(props: {messages: ChatMessage[]}) {
 }
 
 function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
-    let exampleMessages: ChatMessage[] = [
-        {type: "user", message: "สวัสดีครับ"},
-        {type: "system", message: "สวัสดีครับ มีอะไรให้ช่วยครับ"},
-        {type: "user", message: "ฉันอยากทราบราคาสินค้า"},
-        {type: "system", message: "ราคาสินค้าคือ 100 บาทครับ"},
-        {type: "user", message: "ขอบคุณครับ"},
-        {type: "system", message: "ยินดีครับ"},
-    ]
+    let [messages, setMessages] = useState<ChatMessage[]>([]);
+    let [chatId, setChatId] = useState<number>(0);
+    let [chatStatus, setChatStatus] = useState<string>("init");
 
-    let [messages, setMessages] = useState(exampleMessages);
-
-    let addMessage = (newMessage: string) => {
-        let newMessages = [...messages, {type: "user", message: newMessage}];
-        setMessages(newMessages);
-    }
+    const understandingTimerRef = useRef<NodeJS.Timeout>();
+    const responseTimerRef = useRef<NodeJS.Timeout>();
 
     let newChat = ()=>{
         let userName = props.state.currentUser?.name;
         let welcomeMessage = (userName)?{type: "system", message: "สวัสดีค่ะ คุณ"+userName+" มีอะไรให้ช่วยคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
         setMessages([welcomeMessage]);
+
+        // create new thread
+        fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({user_id: props.state.currentUser?.id})
+        })
+        .then(response => {return response.json()})
+        .then(data => {
+            setChatId(data.id);
+            setChatStatus("done");
+        })
     }
+
+    let addMessage = (newMessage: string) => {
+        let newMessages = [...messages, {type: "user", message: newMessage}];
+        setMessages(newMessages);
+
+        // send message to server
+        fetch('/api/chat/:id/message?id='+chatId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: props.state.currentUser?.id,
+                message: newMessage
+            })
+        })
+        .then(response => {return response.json()})
+        .then(data => {
+            setChatStatus("ask_context");
+
+            understandingTimerRef.current = setInterval(()=>{
+                getContext();
+            }, 1000);
+        })
+    }
+
+    let getContext = ()=>{
+        fetch('/api/chat/:id/get_context?id='+chatId, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {return response.json()})
+        .then(data => {
+            console.log(data);
+            if (data.action === "context_found") {
+                clearInterval(understandingTimerRef.current);
+                setChatStatus("ask_promotion");
+                getPromotion();
+            }else if (data.action === "follow_up_question") {
+                clearInterval(understandingTimerRef.current);
+                setChatStatus("done");
+                let newMessages = [...messages, {type: "bot", message: data.message}];
+                setMessages(newMessages);
+            }else if (data.action === "running") {
+                // do nothing
+            }else{
+                console.log(data);
+                clearInterval(understandingTimerRef.current);
+                setChatStatus("done");
+                let newMessages = [...messages, {type: "bot", message: "ขอโทษค่ะ ไม่เข้าใจคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                setMessages(newMessages);
+            }
+        })
+    }
+
+    let getPromotion = ()=>{
+        fetch('/api/chat/:id/get_promotions?id='+chatId, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {return response.json()})
+        .then(data => {
+            console.log(data);
+            if (data.action === "promotions found") {
+                setChatStatus("ask_response");
+                responseTimerRef.current = setInterval(()=>{
+                    getResponse();
+                }, 1000);
+            }else{
+                setChatStatus("done");
+                let newMessages = [...messages, {type: "bot", message: "ขอโทษค่ะ ไม่พบโปรโมชั่นที่ตรงกับคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                setMessages(newMessages);
+            }
+        })
+    }
+
+    let getResponse = ()=>{
+        fetch('/api/chat/:id/get_response?id='+chatId, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {return response.json()})
+        .then(data => {
+            console.log(data);
+            if (data.status === "done") {
+                clearInterval(responseTimerRef.current);
+                setChatStatus("done");
+
+                // get last message with type "bot" and add new message
+                let bot_messages = data.message.filter((message: ChatMessage)=>message.type === "bot");
+                let latest_bot_message = bot_messages[bot_messages.length-1];
+                console.log(latest_bot_message);
+
+                let newMessages = [...messages, {type: "bot", message: latest_bot_message.message}];
+                setMessages(newMessages);
+
+            }else if (data.status === "running") {
+                // do nothing
+            }else{
+                clearInterval(responseTimerRef.current);
+                setChatStatus("done");
+                let newMessages = [...messages, {type: "bot", message: "ขอโทษค่ะ พูดจาไม่เข้าใจตอนนี้ค่ะ"}];
+                setMessages(newMessages);
+            }
+        })
+    }
+
+    useEffect(()=>{
+        // newChat();
+
+        return ()=>{
+            if (understandingTimerRef.current) {
+                clearInterval(understandingTimerRef.current);
+            }
+            if (responseTimerRef.current) {
+                clearInterval(responseTimerRef.current);
+            }
+        }
+    }, []);
     
     return (
         <Grid xs={12} md={(props.showActivity)?8:12} sx={{
@@ -167,6 +297,7 @@ function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity:
         }}>
             <ChatPanelToolbar newChat={newChat} showActivity={props.showActivity} setShowActivity={props.setShowActivity} />
             <ChatWindow messages={messages}/>
+            {(chatStatus !== "done")?<div>ระบบกำลังทำงานอยู่ กรุณารอสักครู่ ✨</div>:null}
             <ChatInputBar addMessage={addMessage}/>
         </Grid>
     )
