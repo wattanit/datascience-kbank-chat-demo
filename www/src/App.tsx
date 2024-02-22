@@ -15,6 +15,7 @@ export type UserInfo = {
 export type AppState = {
   currentPage: string,
   currentUser: UserInfo|null,
+  appState: string,
 }
 
 export type StateProps = {
@@ -25,7 +26,8 @@ export type StateProps = {
 function App() {
   let [state, setState] = React.useState<AppState>({
     currentPage: "home", 
-    currentUser: null
+    currentUser: null,
+    appState: "init"
   });
 
   let renderPage;

@@ -5,9 +5,11 @@ from server.db import load_users, find_user
 router = APIRouter()
 
 @router.get("/api/users")
-async def get_users():
+def get_users():
     users = load_users()
-    return users
+    return {
+        "users": users
+    }
 
 @router.get("/api/users/:id")
 async def get_user(id: int):

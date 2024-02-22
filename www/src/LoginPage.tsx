@@ -1,28 +1,43 @@
-import React from 'react';
+import {useState, useEffect} from 'react';
 import Sheet from '@mui/joy/Sheet';
 import Typography from '@mui/joy/Typography';
 import Button from '@mui/joy/Button';
 import type { StateProps, UserInfo } from './App';
 
+type LoginUserInfo = {
+    id: number,
+    name: string,
+    password: string,
+    description: string,
+    customer_segment: string,
+    npl_status: string
+}
+
 function LoginUserSelect( props: {
     setState: React.Dispatch<React.SetStateAction<any>>,
     closePanelHandler: () => void
 }){
-    let LoginUsers = [
-        {id: 1, name: "JohnDoe", password: "password1", description: "คนธรรมดา"},
-        {id: 2, name: "สาริกา ลิ้นวัว", password: "password2", description: "คุณนายเจ้าของตลาด"},
-        {id: 3, name: "ทาย หนูน้ำ", password: "password3", description: "วัยรุ่นสร้างตัว"},
-    ]
+    let [loginUsers, setLoginUsers] = useState<LoginUserInfo[]>([])
+
+    useEffect(()=>{
+        fetch('/api/users')
+        .then(response => {
+            return response.json()
+        })
+        .then(data => setLoginUsers(data.users))
+        .catch((error) => {console.error('Error:', error)});
+    },[])
 
     let loginHandler = (user: UserInfo )=>{
         props.closePanelHandler();
         props.setState({
             currentPage: "chat",
-            currentUser: user
+            currentUser: user,
+            appState: "done"
         });        
     }
 
-    let LoginUserList = LoginUsers.map((user, index) => {
+    let LoginUserList = loginUsers.map((user, index) => {
         return (
             <Sheet key={index} sx={{
                 width: '30rem',
@@ -70,7 +85,7 @@ function LoginUserSelect( props: {
 }
 
 function LoginPanel ( props: StateProps) {
-    let [openLoginList, setOpenLoginList] = React.useState(false);
+    let [openLoginList, setOpenLoginList] = useState(false);
 
     let renderUserList = (openLoginList) ? <LoginUserSelect setState={props.setState} closePanelHandler={()=>{setOpenLoginList(false)}}/> : null;
 
