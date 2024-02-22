@@ -1,0 +1,21 @@
+[
+    {
+      "id": 1,
+      "name": "JohnDoe",
+      "password": "password1",
+      "description": "คนธรรมดา"
+    },
+    {
+      "id": 2,
+      "name": "สาริกา ลิ้นวัว",
+      "password": "password2",
+      "description": "คุณนายเจ้าของตลาด"
+    },
+    {
+      "id": 3,
+      "name": "ทาย หนูน้ำ",
+      "password": "password3",
+      "description": "วัยรุ่นสร้างตัว"
+    }
+  ]
+  
