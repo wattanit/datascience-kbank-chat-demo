@@ -1,8 +1,20 @@
-import { useState} from "react";
+import { useEffect, useState, useRef} from "react";
 import Grid from "@mui/joy/Grid";
 import { Sheet, Typography } from "@mui/joy";
 
 function ActivityItem (props: {report: ActivityReport}) {
+    let report_type = props.report.type;
+    let report_message = props.report.message;
+
+    if (report_type === "context_activity_found") {
+        report_message = JSON.parse(report_message);
+    }
+
+    if (report_type === "promotions_found") {
+        report_message = "Promotions found for the user";
+    }
+
+
     return (
         <Sheet sx={{
             maxWidth: "90%",
@@ -11,8 +23,8 @@ function ActivityItem (props: {report: ActivityReport}) {
             borderRadius: "0.5rem",
             border: "0.1rem solid rgba(1,200,50, 0.5)",
         }}>
-            <b>{props.report.type}&nbsp;:&nbsp;</b>
-            {props.report.message}
+            <b>{report_type}&nbsp;:&nbsp;</b>
+            {report_message}
         </Sheet> 
     )
 }
@@ -46,19 +58,37 @@ type ActivityReport = {
     message: string,
 }
 
-function ActivityPanel () {
-    let exampleActivityReports: ActivityReport[] = [
-        {
-            type: "system",
-            message: "User logged in"
-        },
-        {
-            type: "AI",
-            message: "AI started"
-        },
-    ]
+function ActivityPanel (props : {chatId: number}) {
+    let [activityReports, setActivityReports] = useState<ActivityReport[]>([]);
 
-    let [activityReports, setActivityReports] = useState<ActivityReport[]>(exampleActivityReports)
+    let updateIntervalRef = useRef<NodeJS.Timeout|null>();
+
+    let updateActivity = ()=>{
+        // fetch activity reports from server
+        fetch('/api/chat/:id/assistant?id='+props.chatId)
+        .then(response => {return response.json()})
+        .then(data => {
+            setActivityReports(data);
+        })
+    }
+
+    useEffect(()=>{
+        if (updateIntervalRef.current) {
+            clearInterval(updateIntervalRef.current);
+        }
+
+        if (props.chatId > 0) { 
+            updateIntervalRef.current = setInterval(()=>{
+                updateActivity();
+            }, 1000);
+        }
+
+        return ()=>{
+            if (updateIntervalRef.current) {
+                clearInterval(updateIntervalRef.current);
+            }
+        }
+    }, [props.chatId]);
 
     return (
         <Grid xs={12} md={4} sx={{            

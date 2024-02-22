@@ -6,13 +6,14 @@ import { StateProps } from "./App";
 
 function ChatPage (props: StateProps) {
     let [showActivity, setShowActivity] = useState(true);
+    let [chatId, setChatId] = useState<number>(0);
 
     return (
         <Grid container spacing={1} sx={{
             flexGrow: 1,            
         }}>
-            <ChatPanel {...props} showActivity={showActivity} setShowActivity={setShowActivity} />
-            {(showActivity)?<ActivityPanel/>:null}
+            <ChatPanel {...props} chatId={chatId} setChatId={setChatId} showActivity={showActivity} setShowActivity={setShowActivity} />
+            {(showActivity)?<ActivityPanel chatId={chatId}/>:null}
         </Grid>
     )
 }

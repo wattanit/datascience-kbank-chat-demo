@@ -137,9 +137,13 @@ function ChatWindow(props: {messages: ChatMessage[]}) {
     )
 }
 
-function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
+function ChatPanel (props: StateProps & {
+    chatId: number,
+    setChatId: React.Dispatch<React.SetStateAction<number>>,
+    showActivity: boolean, 
+    setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
     let [messages, setMessages] = useState<ChatMessage[]>([]);
-    let [chatId, setChatId] = useState<number>(0);
+    
     let [chatStatus, setChatStatus] = useState<string>("init");
 
     const understandingTimerRef = useRef<NodeJS.Timeout>();
@@ -160,7 +164,7 @@ function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity:
         })
         .then(response => {return response.json()})
         .then(data => {
-            setChatId(data.id);
+            props.setChatId(data.id);
             setChatStatus("done");
         })
     }
@@ -170,7 +174,7 @@ function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity:
         setMessages(newMessages);
 
         // send message to server
-        fetch('/api/chat/:id/message?id='+chatId, {
+        fetch('/api/chat/:id/message?id='+props.chatId, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -191,7 +195,7 @@ function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity:
     }
 
     let getContext = ()=>{
-        fetch('/api/chat/:id/get_context?id='+chatId, {
+        fetch('/api/chat/:id/get_context?id='+props.chatId, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -222,7 +226,7 @@ function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity:
     }
 
     let getPromotion = ()=>{
-        fetch('/api/chat/:id/get_promotions?id='+chatId, {
+        fetch('/api/chat/:id/get_promotions?id='+props.chatId, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -245,7 +249,7 @@ function ChatPanel (props: StateProps & {showActivity: boolean, setShowActivity:
     }
 
     let getResponse = ()=>{
-        fetch('/api/chat/:id/get_response?id='+chatId, {
+        fetch('/api/chat/:id/get_response?id='+props.chatId, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
