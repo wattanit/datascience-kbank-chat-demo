@@ -27,15 +27,88 @@ async def find_chat(id: int) -> dict|None:
     chat = next((chat for chat in chats if chat["id"] == id), None)
     return chat
 
+CHAT_DATA_PATH = 'data/chats.json'
+
+class ChatDB {
+    def __init__(self):
+        self.data : Chat[] = []
+
+    def load_from_file(self, db_path):
+        with open(db_path, 'r') as f:
+            chat_json = json.load(f)
+
+            for item in chat_json:
+                chat = Chat.from_dict(item)
+                self.data.append(chat)
+
+    def save_to_file(self, db_path):
+        chat_json = []
+        for chat in self.data:
+            item = chat.get_as_dict()
+            chat_json.append(item)
+
+            with open(db_path, 'w') as f:
+                json.dump(chat_json, f, indent=4)
+
+    def get_last_chat(self): 
+        if len(self.data)>0:
+            return self.data[-1]
+
+    def get_chat_by_id(self, )
+
+
+
+class Chat {
+    def __init__(self, chat_id, user_id, thread_id):
+        self.id = chat_id
+        self.user_id = user_id
+        self.openai_thread_id = thread_id
+        self.chat_messages = []
+        self.assistant_logs = []
+        self.status = "ready"
+        self.last_context = ""
+        self.openai_run_id = []
+
+    def get_as_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "openai_thread_id": self.openai_thread_id,
+            "chat_messages": self.chat_messages,
+            "assistant_logs": self.assistant_logs,
+            "status": self.status,
+            "last_context": self.last_context,
+            "openai_run_id": self.openai_run_id
+        }
+
+    @staticmethod
+    def from_dict(data) -> Chat:
+        new_chat = Chat(
+            data["id"],
+            data["user_id"],
+            data["openai_thread_id"],
+        )
+        new_chat.chat_messages = data["chat_messages"]
+        new_chat.assistant_logs = data["assistant_logs"]
+        new_chat.status = data["status"]
+        new_chat.last_context = data["last_context"]
+        new_chat.openai_run_id = data["openai_run_id"]
+        return new_chat
+}
+
 async def create_chat(user_id: int, thread_id: str) -> dict:
     # find the last chat id
     chats = load_chats()
     if len(chats)>0:
         last_chat = chats[-1]
+
+
         last_chat_id = last_chat["id"]
         new_chat_id = last_chat_id + 1
     else:
         new_chat_id = 1
+
+    
 
     new_chat = {
         "id": new_chat_id,
