@@ -31,7 +31,7 @@ async def get_chat_promotions(id: int):
     last_context = chat.get_last_context()
     first_thing = last_context["top_5_things"][0]
 
-    q1 = last_user_message.message
+    q1 = last_user_message
     q2 = first_thing
 
     logging.info("Querying promotions: q1={}, q2={}".format(q1, q2))

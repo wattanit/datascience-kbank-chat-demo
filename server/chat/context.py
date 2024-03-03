@@ -19,7 +19,7 @@ class NewChatMessagePayload(BaseModel):
 
 @router.post("/api/chat/{id}/message")
 async def create_chat_message(id: int, body: NewChatMessagePayload):
-    chat = await find_chat(id)
+    chat = CHAT_DB.get_chat_by_id(id)
     if chat is None:
         logging.warning("Chat not found: id = {}".format(id))
         raise HTTPException(status_code=404, detail="Chat not found")
@@ -44,7 +44,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
         "content": '{} [customer_segment: "{}"]'.format(body.message, customer_segment)
     }
     logging.info("Calling OpenAI to add message: {}".format(data))
-    response = requests.post(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', data=json.dumps(data), headers={
+    response = requests.post(f'https://api.openai.com/v1/threads/{chat.openai_thread_id}/messages', data=json.dumps(data), headers={
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
         'OpenAI-Beta': 'assistants=v1'
@@ -79,7 +79,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
         CHAT_DB.update_chat(chat)
         logging.info("Run created with id={}. Updated chat: {}".format(response["id"],chat.id))
 
-    return new_chat_message
+    return chat
 
 @router.get("/api/chat/{id}/get_context")
 async def get_chat_context(id: int):

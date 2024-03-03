@@ -13,7 +13,7 @@ load_dotenv()
 
 router = APIRouter()
 
-@router.get("/api/chat/{id}/create_promotions_text")
+@router.post("/api/chat/{id}/create_promotions_text")
 async def create_promotions_text(id: int):
     chat = CHAT_DB.get_chat_by_id(id)
     if chat is None:
@@ -105,7 +105,7 @@ async def get_chat_response(id: int):
         }
 
     # get running status
-    response = requests.get(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/runs/{run_id}', headers={
+    response = requests.get(f'https://api.openai.com/v1/threads/{chat.openai_thread_id}/runs/{run_id}', headers={
         'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
         'OpenAI-Beta': 'assistants=v1'
     })
@@ -130,7 +130,7 @@ async def get_chat_response(id: int):
     CHAT_DB.update_chat(chat)
 
     # retrieve response messages
-    response = requests.get(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', headers={
+    response = requests.get(f'https://api.openai.com/v1/threads/{chat.openai_thread_id}/messages', headers={
         'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
         'OpenAI-Beta': 'assistants=v1'
     })

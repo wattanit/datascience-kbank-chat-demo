@@ -11,7 +11,7 @@ def get_users():
         "users": users
     }
 
-@router.get("/api/users/:id")
+@router.get("/api/users/{id}")
 async def get_user(id: int):
     user = USER_DB.get_user_by_id(id)
     return user
