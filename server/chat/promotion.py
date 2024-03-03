@@ -28,14 +28,14 @@ async def get_chat_promotions(id: int):
             "promotions": "",
         }
 
-    last_context = chat.getLastContext()
+    last_context = chat.get_last_context()
     first_thing = last_context["top_5_things"][0]
 
     q1 = last_user_message.message
     q2 = first_thing
 
     logging.info("Querying promotions: q1={}, q2={}".format(q1, q2))
-    chat.addAssistantLog("promotions_query", "Querying promotions: q1={}, q2={}".format(q1, q2))
+    chat.add_assistant_log("promotions_query", "Querying promotions: q1={}, q2={}".format(q1, q2))
     
     # query for promotions
     response = requests.get("http://localhost:8001/api/search", params={"q1": q1, "q2": q2})
@@ -54,8 +54,8 @@ async def get_chat_promotions(id: int):
         }
         
     logging.info("Promotions found: {}".format(response["result"]))
-    chat.addAssistantLog("promotions_found", json.dumps(response["result"]))
-    chat.setLastPromotions(response["result"])
+    chat.add_assistant_log("promotions_found", json.dumps(response["result"]))
+    chat.set_last_promotions(response["result"])
     CHAT_DB.update_chat(chat)
     return {
         "status": "ready",

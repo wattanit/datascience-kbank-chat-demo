@@ -152,55 +152,55 @@ class Chat:
         new_chat.openai_run_id = data["openai_run_id"]
         return new_chat
 
-    def addMessage(self, user_type, message)->None:
+    def add_message(self, user_type, message)->None:
         new_message = ChatMessage(user_type, message)
         self.chat_messages.append(new_message)
 
-    def getLastUserMessage(self)->str|None:
+    def get_last_user_message(self)->str|None:
         for message in reversed(self.chat_messages):
             if message.type == "user":
                 return message.message
         return None
 
-    def addAssistantLog(self, chat_type, message)->None:
+    def add_assistant_log(self, chat_type, message)->None:
         new_log = AssistantLog(chat_type, message)
         self.assistant_logs.append(new_log)
 
-    def addRunId(self, run_id)->None:
+    def add_run_id(self, run_id)->None:
         self.openai_run_id.append(run_id)
 
-    def getLastRunId(self)-> str|None:
+    def get_last_run_id(self)-> str|None:
         if len(self.openai_run_id) > 0:
             return self.openai_run_id[-1]
         else:
             return None
 
-    def setStatus(self, status)->None:
+    def set_status(self, status)->None:
         if status in ["ready", "running", "complete", "error"]:
             self.status = status
         else:
             logging.warning("Invalid status: {}".format(status))
             raise ValueError("Invalid status")
 
-    def isRunning(self)->bool:
+    def is_running(self)->bool:
         return self.status == "running"
 
-    def isReady(self)->bool:
+    def is_ready(self)->bool:
         return self.status == "ready"
 
-    def setLastContext(self, context)->None:
+    def set_last_context(self, context)->None:
         self.last_context = json.dumps(context)
 
-    def getLastContext(self)->dict|None:
+    def get_last_context(self)->dict|None:
         if self.last_context != "":
             return json.loads(self.last_context)
         else:
             return None
 
-    def setLastPromotions(self, promotions)->None:
+    def set_last_promotions(self, promotions)->None:
         self.last_promotions = json.dumps(promotions)
 
-    def getLastPromotions(self)->dict|None:
+    def get_last_promotions(self)->dict|None:
         if self.last_promotions != "":
             return json.loads(self.last_promotions)
         else:

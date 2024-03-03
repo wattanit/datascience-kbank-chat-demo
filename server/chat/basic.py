@@ -36,7 +36,7 @@ async def post_chat(body: NewChatPayload):
     logging.info("Created OpenAI thread: {}".format(thread_id))
 
     new_chat = Chat(0, body.user_id, thread_id)
-    new_chat.addAssistantLog("new_chat", "New chat created")
+    new_chat.add_assistant_log("new_chat", "New chat created")
     new_chat = CHAT_DB.add_chat(new_chat)
     logging.info("Created new chat: {}".format(new_chat))
 

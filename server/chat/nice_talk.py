@@ -22,7 +22,7 @@ async def create_promotions_text(id: int):
 
     thread_id = chat.openai_thread_id
 
-    promotions = chat.getLastPromotions()
+    promotions = chat.get_last_promotions()
     promotion_text = json.dumps(promotions)
 
     logging.info("Adding promotions to OpenAI thread: chat_id={}, thread_id={}".format(chat.id, thread_id))
@@ -41,7 +41,7 @@ async def create_promotions_text(id: int):
         logging.warning("OpenAI message creation failed: {}".format(response))
         raise HTTPException(status_code=500, detail="OpenAI message creation failed")
 
-    chat.addAssistantLog("ask_for_promotion_text", "AI is asked to describe the promotion")
+    chat.add_assistant_log("ask_for_promotion_text", "AI is asked to describe the promotion")
     CHAT_DB.update_chat(chat)
 
     # create a new run using Response Agent
@@ -60,9 +60,9 @@ async def create_promotions_text(id: int):
         raise HTTPException(status_code=500, detail="OpenAI run creation failed")
 
     response = response.json()
-    chat.addRunId(response["id"])
-    chat.setStatus("running")
-    chat.addAssistantLog("run_created", "Thinking of a nice response text. New run created: id={}".format(response["id"]))
+    chat.add_run_id(response["id"])
+    chat.set_status("running")
+    chat.add_assistant_log("run_created", "Thinking of a nice response text. New run created: id={}".format(response["id"]))
     logging.info("Run created with id={}. Updated chat: {}".format(response["id"],chat.id))
     CHAT_DB.update_chat(chat)
 
@@ -79,7 +79,7 @@ async def get_chat_response(id: int):
         logging.warning("Chat not found: id = {}".format(id))
         raise HTTPException(status_code=404, detail="Chat not found")
 
-    if not chat.isRunning:
+    if not chat.is_running:
         return {
             "status": "ready",
             "action": "no_run",
@@ -89,10 +89,10 @@ async def get_chat_response(id: int):
             "assistant_logs": chat.assistant_logs
         }
 
-    run_id = chat.getLastRunId()
+    run_id = chat.get_last_run_id()
     if run_id is None:
         logging.warning("Run ID not found. Set chat status to ready")
-        chat.setStatus("ready")
+        chat.set_status("ready")
         CHAT_DB.update_chat(chat)
         logging.info("Updated chat: {}".format(chat.id))
         return {
@@ -125,8 +125,8 @@ async def get_chat_response(id: int):
             "assistant_logs": chat.assistant_logs
         }
 
-    chat.addAssistantLog("run_complete", "Run complete: id={}".format(run_id))
-    chat.setStatus("ready")
+    chat.add_assistant_log("run_complete", "Run complete: id={}".format(run_id))
+    chat.set_status("ready")
     CHAT_DB.update_chat(chat)
 
     # retrieve response messages
@@ -144,8 +144,8 @@ async def get_chat_response(id: int):
     response_content = response_message["content"][0]
 
     if response_content["type"] != "text":
-        chat.setStatus("error")
-        chat.addAssistantLog("invalid_response", "Invalid response: {}".format(response_content))
+        chat.set_status("error")
+        chat.add_assistant_log("invalid_response", "Invalid response: {}".format(response_content))
         CHAT_DB.update_chat(chat)
         logging.warning("Invalid response: {}".format(response_content))
         return {
@@ -158,9 +158,9 @@ async def get_chat_response(id: int):
         }
 
     message = response_content["text"]["value"]
-    chat.addMessage("assistant", message)
-    chat.addAssistantLog("response_message", "Response message added: {}".format(message))
-    chat.setStatus("ready")
+    chat.add_message("assistant", message)
+    chat.add_assistant_log("response_message", "Response message added: {}".format(message))
+    chat.set_status("ready")
     CHAT_DB.update_chat(chat)
 
     return {
