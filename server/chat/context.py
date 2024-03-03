@@ -1,0 +1,233 @@
+from fastapi import APIRouter, HTTPException
+import json
+from pydantic import BaseModel
+from dotenv import load_dotenv
+import os
+import requests
+import logging
+from server.db import CHAT_DB, USER_DB
+
+logging.basicConfig(level=logging.INFO)
+
+load_dotenv()
+
+router = APIRouter()
+
+class NewChatMessagePayload(BaseModel):
+    user_id: int
+    message: str
+
+@router.post("/api/chat/{id}/message")
+async def create_chat_message(id: int, body: NewChatMessagePayload):
+    chat = await find_chat(id)
+    if chat is None:
+        logging.warning("Chat not found: id = {}".format(id))
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    # get user data
+    user_id = body.user_id
+    user = USER_DB.get_user_by_id(user_id)
+    if user is None:
+        logging.warning("User not found: id = {}".format(user_id))
+        raise HTTPException(status_code=404, detail="User not found")
+    customer_segment = user.segment
+
+    # save user message
+    chat.addMessage("user", body.message)
+    chat.addAssistantLog("user_message", "User message added: {}".format(body.message))
+    CHAT_DB.update_chat(chat)
+    logging.info("Updated chat: {}".format(chat.id))
+
+    # call OpenAI to add the message
+    data = {
+        "role": "user",
+        "content": '{} [customer_segment: "{}"]'.format(body.message, customer_segment)
+    }
+    logging.info("Calling OpenAI to add message: {}".format(data))
+    response = requests.post(f'https://api.openai.com/v1/threads/{chat["openai_thread_id"]}/messages', data=json.dumps(data), headers={
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+        'OpenAI-Beta': 'assistants=v1'
+        })
+
+    if response.status_code != 200:
+        logging.warning("OpenAI message creation failed: {}".format(response))
+        raise HTTPException(status_code=500, detail="OpenAI message creation failed")
+
+    # call OpenAI to create a new run
+    if chat.isReady():
+        thread_id = chat.openai_thread_id
+        data = {
+            "assistant_id": os.getenv("OPENAI_UNDERSTANDING_AGENT_ID")
+        }
+        logging.info("Calling OpenAI to create run: {}".format(data))
+        response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/runs', data=json.dumps(data), headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+            'OpenAI-Beta': 'assistants=v1'
+            })
+
+        if response.status_code != 200:
+            logging.warning("OpenAI run creation failed: {}".format(response))
+            raise HTTPException(status_code=500, detail="OpenAI run creation failed")
+
+        response = response.json()
+
+        chat.addRunId(response["id"])
+        chat.setStatus("running")
+        chat.addAssistantLog("run_created", "Thinking of a relevant context. New run created: id={}".format(response["id"]))
+        CHAT_DB.update_chat(chat)
+        logging.info("Run created with id={}. Updated chat: {}".format(response["id"],chat.id))
+
+    return new_chat_message
+
+@router.get("/api/chat/{id}/get_context")
+async def get_chat_context(id: int):
+    chat = CHAT_DB.get_chat_by_id(id)
+    if chat is None:
+        logging.warning("Chat not found: id = {}".format(id))
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    if !chat.isRunning():
+        return {
+            "status": "ready",
+            "action": "no_run",
+            "context": chat.last_context,
+            "message": ""
+        }
+    
+    thread_id = chat.openai_thread_id
+    run_id = chat.getLastRunId()
+    if run_id is None:
+        logging.warning("Run ID not found. Set chat status to ready")
+        chat.setStatus("ready")
+        CHAT_DB.update_chat(chat)
+        logging.info("Updated chat: {}".format(chat.id))
+        return {
+            "status": "ready",
+            "action": "no_run",
+            "context": chat.last_context,
+            "message": ""
+        }
+    
+    logging.info("Calling OpenAI to get run status: chat_id={} thread_id={}, run_id={}".format(chat.id, thread_id, run_id))
+    response = requests.get(f'https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}', headers={
+        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+        'OpenAI-Beta': 'assistants=v1'
+        })
+
+    if response.status_code != 200:
+        logging.warning("OpenAI run status failed: {}".format(response))
+        raise HTTPException(status_code=500, detail="OpenAI run status failed")
+
+    response = response.json()
+    if response["status"] != "completed":
+        return {
+            "status": "running",
+            "action": "run_in_progress",
+            "context": chat.last_context,
+            "message": ""
+        }
+
+    # if run is completed
+
+    chat.setStatus("ready")
+    chat.addAssistantLog("run_complete", "Run complete: id={}".format(run_id))
+
+    # retrieve the run response from the last message of the thread
+    logging.info("Calling OpenAI to get messages: chat_id={} thread_id={}".format(chat.id, thread_id))  
+    response = requests.get(f'https://api.openai.com/v1/threads/{thread_id}/messages', headers={
+        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
+        'OpenAI-Beta': 'assistants=v1'
+    }) 
+
+    if response.status_code != 200:
+        logging.warning("OpenAI message retrieval failed: {}".format(response))
+        raise HTTPException(status_code=500, detail="OpenAI message retrieval failed")
+
+    response = response.json()
+    response_message = response["data"][0]
+
+    if response_message["role"] != "assistant":
+        chat.setStatus("ready")
+        chat.addAssistantLog("No response", "No AI response backed from context agent")
+        logging.warning("No AI response backed from context agent: {}".format(response_message))
+        CHAT_DB.update_chat(chat)
+        return {
+            "status": "ready",
+            "action": "no_response",
+            "context": chat.last_context,
+            "message": "No response"
+        }
+
+    response_content = response_message["content"][0]
+
+    if response_content["type"] != "text":
+        chat.setStatus("error")
+        chat.addAssistantLog("error", "Failed to parse OpenAI response: {}".format(response_content))
+        logging.warning("Failed to parse OpenAI response: {}".format(response_content))
+        CHAT_DB.update_chat(chat)
+        return {
+            "status": "error",
+            "action": "unexpected_response",
+            "context": chat.last_context,
+            "message": "AI is confused"
+        }
+
+    response_text = response_content["text"]
+    try:
+        response_body = json.loads(response_text["value"])
+
+        # if assistant asks for a follow up question
+        if "follow_up_question" in response_body:
+            # add follow up question to chat
+            chat.addMessage("assistant", response_body["follow_up_question"])
+            chat.addAssistantLog("follow_up_question", response_body["follow_up_question"])
+            logging.info("Follow up question added: {}".format(response_body["follow_up_question"]))
+            CHAT_DB.update_chat(chat)
+            return {
+                "status": "ready",
+                "action": "follow_up_question",
+                "context": chat.last_context,
+                "message": response_body["follow_up_question"]
+            }
+        
+        # if assistant found a context
+        elif "meaning" in response_body:
+            chat.addAssistantLog("context_meaning_found", response_body["meaning"])
+            if "top_5_things" in response_body:
+                chat.addAssistantLog("context_activity_found", json.dumps(response_body["top_5_things"]))
+
+            logging.info("Context found: chat_id={} context: {}".format(chat.id, response_body))
+            chat.setLastContext(response_body)
+            CHAT_DB.update_chat(chat)
+            return {
+                "status": "ready",
+                "action": "context_found",
+                "context": chat.last_context,
+                "message": response_body
+            }
+        else:
+            chat.setStatus("error")
+            chat.addAssistantLog("error", "AI is confused: {}".format(response_text))
+            logging.warning("Unexpected chat context response format: {}".format(response_text))
+            CHAT_DB.update_chat(chat)
+            return {
+                "status": "error",
+                "action": "unexpected_response",
+                "context": chat.last_context,
+                "message": "AI is confused"
+            }
+
+    except:
+        chat.setStatus("error")
+        chat.addAssistantLog("error", "Failed to parse OpenAI response: {}".format(response_text))
+        logging.warning("Failed to parse OpenAI response: {}".format(response_text))
+        CHAT_DB.update_chat(chat)
+        return {
+            "status": "error",
+            "action": "unexpected_response",
+            "context": chat.last_context,
+            "message": "AI is confused"
+        }
+    

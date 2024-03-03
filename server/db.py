@@ -114,7 +114,7 @@ class ChatDB:
 
                 return
 
-    def add_chat(self, chat: Chat, persist=True) -> None:
+    def add_chat(self, chat: Chat, persist=True) -> Chat:
         last_chat = self.get_last_chat()
         if last_chat:
             chat.id = last_chat.id + 1
@@ -125,6 +125,8 @@ class ChatDB:
 
         if persist:
             self.save_to_file(self.db_path)
+
+        return chat
 
     def delete_chat(self, id: int|None = None, chat: Chat|None = None, persist=True) -> None:
         if id:
@@ -145,23 +147,25 @@ class ChatDB:
 class Chat:
     def __init__(self, chat_id, user_id, thread_id):
         self.id: int = chat_id
-        self.user_id = user_id
-        self.openai_thread_id = thread_id
-        self.chat_messages = []
-        self.assistant_logs = []
+        self.user_id: str = user_id
+        self.openai_thread_id: str = thread_id
+        self.chat_messages: ChatMessage[] = []
+        self.assistant_logs: AssistantLog[] = []
         self.status = "ready"
         self.last_context = ""
-        self.openai_run_id = []
+        self.last_promotions = ""
+        self.openai_run_id: str[] = []
 
     def get_as_dict(self):
         return {
             "id": self.id,
             "user_id": self.user_id,
             "openai_thread_id": self.openai_thread_id,
-            "chat_messages": self.chat_messages,
-            "assistant_logs": self.assistant_logs,
+            "chat_messages": [message.get_as_dict() for message in self.chat_messages],
+            "assistant_logs": [log.get_as_dict() for log in self.assistant_logs],
             "status": self.status,
             "last_context": self.last_context,
+            "last_promotions": self.last_promotions,
             "openai_run_id": self.openai_run_id
         }
 
@@ -172,15 +176,108 @@ class Chat:
             data["user_id"],
             data["openai_thread_id"],
         )
-        new_chat.chat_messages = data["chat_messages"]
-        new_chat.assistant_logs = data["assistant_logs"]
+        new_chat.chat_messages = [ChatMessage.from_dict(message) for message in data["chat_messages"]]
+        new_chat.assistant_logs = [AssistantLog.from_dict(log) for log in data["assistant_logs"]]
         new_chat.status = data["status"]
         new_chat.last_context = data["last_context"]
+        new_chat.last_promotions = data["last_promotions"]
         new_chat.openai_run_id = data["openai_run_id"]
         return new_chat
 
-user_db = UserDB(USER_DATA_PATH)
-chat_db = ChatDB(CHAT_DATA_PATH)
+    def addMessage(self, user_type, message)->None:
+        new_message = ChatMessage(user_type, message)
+        self.chat_messages.append(new_message)
+
+    def getLastUserMessage(self)->str|None:
+        for message in reversed(self.chat_messages):
+            if message.type == "user":
+                return message.message
+        return None
+
+    def addAssistantLog(self, chat_type, message)->None:
+        new_log = AssistantLog(chat_type, message)
+        self.assistant_logs.append(new_log)
+
+    def addRunId(self, run_id)->None:
+        self.openai_run_id.append(run_id)
+
+    def getLastRunId(self)-> str|None:
+        if len(self.openai_run_id) > 0:
+            return self.openai_run_id[-1]
+        else:
+            return None
+
+    def setStatus(self, status)->None:
+        if status in ["ready", "running", "complete", "error"]:
+            self.status = status
+        else:
+            logging.warning("Invalid status: {}".format(status))
+            raise ValueError("Invalid status")
+
+    def isRunning(self)->bool:
+        return self.status == "running"
+
+    def isReady(self)->bool:
+
+    def setLastContext(self, context)->None:
+        self.last_context = json.dumps(context)
+
+    def getLastContext(self)->dict|None:
+        if self.last_context != "":
+            return json.loads(self.last_context)
+        else:
+            return None
+
+    def setLastPromotions(self, promotions)->None:
+        self.last_promotions = json.dumps(promotions)
+
+    def getLastPromotions(self)->dict|None:
+        if self.last_promotions != "":
+            return json.loads(self.last_promotions)
+        else:
+            return None
+
+class ChatMessage:
+    def __init__(self, user_type, message):
+        if user_type in ["user", "assistant", "system"]:
+            self.type = user_type
+            self.message = message
+        else:
+            logging.warning("Invalid user type: {}".format(user_type))
+            raise ValueError("Invalid user type")
+
+    def get_as_dict(self):
+        return {
+            "user_type": self.type,
+            "message": self.message
+        }
+    @staticmethod
+    def from_dict(data) -> ChatMessage:
+        return ChatMessage(
+            data["user_type"],
+            data["message"]
+        )
+
+class AssistantLog:
+    def __init__(self, chat_type, message):
+        self.type = chat_type
+        self.message = message
+
+    def get_as_dict(self):
+        return {
+            "type": self.type,
+            "message": self.message
+        }
+
+    @staticmethod
+    def from_dict(data) -> AssistantLog:
+        return AssistantLog(
+            data["type"],
+            data["message"]
+        )
+
+USER_DB = UserDB(USER_DATA_PATH)
+CHAT_DB = ChatDB(CHAT_DATA_PATH)
 
 async def create_chat(user_id: int, thread_id: str) -> dict:
     new_chat = new Chat(0, user_id, thread_id)
