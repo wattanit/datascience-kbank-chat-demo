@@ -27,7 +27,10 @@ function ChatPanelToolbar(props: {newChat: ()=>void,showActivity: boolean, setSh
     )
 }
 
-function ChatInputBar (props: {addMessage: (newMessage: string)=>void}) {
+function ChatInputBar (props: {
+    addMessage: (newMessage: string)=>void,
+    chatStatus: string
+}) {
     let [newMessage, setNewMessage] = useState("")
 
     return (
@@ -46,6 +49,7 @@ function ChatInputBar (props: {addMessage: (newMessage: string)=>void}) {
                 fontSize: "16px",
                 fontFamily: "Arial, sans-serif",
             }} value={newMessage} 
+               disabled={(props.chatStatus !== "ready")}
                onChange={(e)=>{setNewMessage(e.target.value)}}
                onKeyUp={(e)=>{
                 // e.preventDefault();
@@ -55,9 +59,11 @@ function ChatInputBar (props: {addMessage: (newMessage: string)=>void}) {
                 }
                }}
             />
-            <Button color="success" onClick={()=>{
-                props.addMessage(newMessage);
-                setNewMessage("");
+            <Button color="success" 
+                disabled={(props.chatStatus !== "ready")}
+                onClick={()=>{
+                    props.addMessage(newMessage);
+                    setNewMessage("");
             }}>ส่งข้อความ</Button>
         </Sheet>
     )
@@ -140,7 +146,7 @@ function ChatWindow(props: {messages: ChatMessage[]}) {
     let renderMessages = props.messages.map((message, index)=>{
         if (message.type === "user") {
             return <ChatBoxUser key={index} data={message}/>
-        } else if (message.type === "bot") {
+        } else if (message.type === "assistant") {
             return <ChatBoxSystem key={index} data={message}/>
         } else {
             return <ChatBoxInfo key={index} data={message}/>
@@ -167,11 +173,16 @@ function ChatPanel (props: StateProps & {
     chatId: number,
     setChatId: React.Dispatch<React.SetStateAction<number>>,
     showActivity: boolean, 
-    setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
+    setShowActivity: React.Dispatch<React.SetStateAction<boolean>>
+}) {
     let [messages, setMessages] = useState<ChatMessage[]>([]);
     let [chatTick, setChatTick] = useState<number>(0); // to force re-render
-    let [chatStatus, setChatStatus] = useState<string>("init");
-
+    
+    // chatStatus controls the main event loop and should be one of the following:
+    // init, ask_context, ask_promotion, ask_response, ready
+    let [chatStatus, setChatStatus] = useState<string>("init"); 
+    
+    // event loop monitoring
     let monitor = ()=>{
         if (chatStatus === "ask_context") {
             getContext();
@@ -182,9 +193,10 @@ function ChatPanel (props: StateProps & {
         }
     }
 
+    // new chat event handler. This function will create a new chat thread and set chatStatus to "ready"
     let newChat = ()=>{
         let userName = props.state.currentUser?.name;
-        let welcomeMessage = (userName)?{type: "bot", message: "สวัสดีค่ะ คุณ"+userName+" สนใจหาโปรโมชั่นสำหรับโอกาสไหนคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
+        let welcomeMessage = (userName)?{type: "assistant", message: "สวัสดีค่ะ คุณ"+userName+" สนใจหาโปรโมชั่นสำหรับโอกาสไหนคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
         setMessages([welcomeMessage]);
 
         // create new thread
@@ -199,17 +211,18 @@ function ChatPanel (props: StateProps & {
         .then(data => {
             props.setChatId(data.id);
 
-            setChatStatus("done");
+            setChatStatus("ready");
         })
     }
 
+    // add message event handler. This function will add a new message to the chat thread and set chatStatus to "ask_context"
     let addMessage = (newMessage: string) => {
         let oldMessages = messages;
         let newMessages = [...oldMessages, {type: "user", message: newMessage}];
         setMessages(newMessages);
 
         // send message to server
-        fetch('/api/chat/:id/message?id='+props.chatId, {
+        fetch(`/api/chat/${props.chatId}/message`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -225,13 +238,14 @@ function ChatPanel (props: StateProps & {
         })
     }
 
+    // event loop for checking context from server
     let getContext = ()=>{
         if (chatStatus !== "ask_context") {
             return;
         }
         console.log("get context");
 
-        fetch('/api/chat/:id/get_context?id='+props.chatId, {
+        fetch(`/api/chat/${props.chatId}/get_context`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -243,29 +257,30 @@ function ChatPanel (props: StateProps & {
             if (data.action === "context_found") {
                 setChatStatus("ask_promotion");
             }else if (data.action === "follow_up_question") {
-                setChatStatus("done");
+                setChatStatus("ready");
                 let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "bot", message: data.message}];
+                let newMessages = [...oldMessages, {type: "assistant", message: data.message}];
                 setMessages(newMessages);
-            }else if (data.action === "running") {
+            }else if (data.status === "running") {
                 // do nothing
             }else{
-                setChatStatus("done");
-                let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "bot", message: "ขอโทษค่ะ ไม่เข้าใจคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
-                setMessages(newMessages);
+                // setChatStatus("ready");
+                // let oldMessages = messages;
+                // let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ไม่เข้าใจคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                // setMessages(newMessages);
             }
         })
     }
 
+    // event loop for checking promotion from server
     let getPromotion = ()=>{
         if (chatStatus !== "ask_promotion") {
             return;
         }
-        setChatStatus("done");
+        setChatStatus("ready");
         console.log("get promotion");
 
-        fetch('/api/chat/:id/get_promotions?id='+props.chatId, {
+        fetch(`/api/chat/${props.chatId}/get_promotions`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -278,23 +293,36 @@ function ChatPanel (props: StateProps & {
                 let oldMessages = messages;
                 let newMessages = [...oldMessages, {type: "system", message: "กำลังคัดเลือกโปรโมชั่นที่เหมาะสมที่สุดสำหรับคุณ"}];
                 setMessages(newMessages);
-                setChatStatus("ask_response");
+
+                // trigger server to generate response text
+                fetch(`/api/chat/${props.chatId}/create_promotions_text`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => {return response.json()})
+                .then(data => {
+                    if (data.action === "wait_for_promotion_text") {
+                        setChatStatus("ask_response");
+                }});
             }else{
-                setChatStatus("done");
                 let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "bot", message: "ขอโทษค่ะ ไม่พบโปรโมชั่นที่ตรงกับคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ไม่พบโปรโมชั่นที่ตรงกับคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
                 setMessages(newMessages);
+                setChatStatus("ready");
             }
         })
     }
 
+    // event loop for checking response from server
     let getResponse = ()=>{
         if (chatStatus !== "ask_response") {
             return;
         }
         console.log("get response");
 
-        fetch('/api/chat/:id/get_response?id='+props.chatId, {
+        fetch(`/api/chat/${props.chatId}/get_response`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -303,24 +331,24 @@ function ChatPanel (props: StateProps & {
         .then(response => {return response.json()})
         .then(data => {
             console.log(data);
-            if (data.status === "done") {
-                setChatStatus("done");
+            if (data.status === "ready") {
+                setChatStatus("ready");
 
-                // get last message with type "bot" and add new message
-                let bot_messages = data.message.filter((message: ChatMessage)=>message.type === "bot");
+                // get last message with type "assistant" and add new message
+                let bot_messages = data.message.filter((message: ChatMessage)=>message.type === "assistant");
                 let latest_bot_message = bot_messages[bot_messages.length-1];
                 console.log(latest_bot_message);
 
                 let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "bot", message: latest_bot_message.message}];
+                let newMessages = [...oldMessages, {type: "assistant", message: latest_bot_message.message}];
                 setMessages(newMessages);
 
             }else if (data.status === "running") {
                 // do nothing
             }else{
-                setChatStatus("done");
+                setChatStatus("ready");
                 let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "bot", message: "ขอโทษค่ะ ตอนนี้ระบบไม่สามารถให้ข้อมูลได้ คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ตอนนี้ระบบไม่สามารถให้ข้อมูลได้ คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
                 setMessages(newMessages);
             }
         })
@@ -330,6 +358,7 @@ function ChatPanel (props: StateProps & {
         if (chatStatus === "init"){
             newChat();
         }
+        console.log("chat status: "+chatStatus);
 
         monitor();
         setTimeout(()=>{
@@ -338,13 +367,7 @@ function ChatPanel (props: StateProps & {
             }else{
                 setChatTick(0);
             }
-        }, 1500);
-
-        return ()=>{
-            // if (monitoringIntervalRef.current) {
-            //     clearInterval(monitoringIntervalRef.current);
-            // }
-        }
+        }, 1000);
     }, [chatTick]);
     
     return (
@@ -354,8 +377,8 @@ function ChatPanel (props: StateProps & {
         }}>
             <ChatPanelToolbar newChat={newChat} showActivity={props.showActivity} setShowActivity={props.setShowActivity} />
             <ChatWindow messages={messages}/>
-            {(chatStatus !== "done")?<div>ระบบกำลังทำงานอยู่ กรุณารอสักครู่ ✨</div>:null}
-            <ChatInputBar addMessage={addMessage}/>
+            {(chatStatus !== "ready")?<div>ระบบกำลังทำงานอยู่ กรุณารอสักครู่ ✨</div>:null}
+            <ChatInputBar addMessage={addMessage} chatStatus={chatStatus}/>
         </Grid>
     )
 }

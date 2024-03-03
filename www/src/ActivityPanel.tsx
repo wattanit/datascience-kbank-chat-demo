@@ -65,7 +65,7 @@ function ActivityPanel (props : {chatId: number}) {
 
     let updateActivity = ()=>{
         // fetch activity reports from server
-        fetch('/api/chat/:id/assistant?id='+props.chatId)
+        fetch(`/api/chat/${props.chatId}/assistant`)
         .then(response => {return response.json()})
         .then(data => {
             setActivityReports(data);
