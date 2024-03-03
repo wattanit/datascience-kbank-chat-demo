@@ -2,38 +2,83 @@ import json
 
 #### DATABASE SIMULATION ####
 # load user data from data/users.json, simulating a database
-def load_users():
-    with open('data/users.json') as f:
-        users = json.load(f)
-    return users
+USER_DATA_PATH = 'data/users.json'
 
-async def find_user(id: int):
-    users = load_users()
-    user = next((user for user in users if user["id"] == id), None)
-    return user
+Class UserDB:
+    def __init__(self, db_path):
+        self.data: User[] = []
+        self.db_path = db_path
+        self.load_from_file(db_path)
+
+    def load_from_file(self, db_path) -> None:
+        with open(db_path, 'r') as f:
+            user_json = json.load(f)
+
+            for item in user_json:
+                user = User.from_dict(item)
+                self.data.append(user)
+
+    def save_to_file(self, db_path) -> None:
+        user_json = []
+        for user in self.data:
+            item = user.get_as_dict()
+            user_json.append(item)
+
+            with open(db_path, 'w') as f:
+                json.dump(user_json, f, indent=4)
+
+    def get_user_by_id(self, id: int) -> User|None:
+        for user in self.data:
+            if user.id == id:
+                return user
+
+    def get_all_users_as_dict(self) -> dict[]:
+        users: dict[] = []
+        for user in self.data:
+            users.append(user.get_as_dict())
+        return users
+
+Class User:
+    def __init__(self, name, password, description, segment, npl_status):
+        self.id = 0
+        self.name = name
+        self.password = password
+        self.description = description
+        self.segment = segment
+        self.npl_status = npl_status
+
+    def get_as_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "password": self.password,
+            "description": self.description,
+            "customer_segment": self.segment,
+            "NPL_status": self.npl_status
+        }
+
+    @staticmethod
+    def from_dict(data) -> User:
+        new_user = User(
+            data["name"],
+            data["password"],
+            data["description"],
+            data["customer_segment"],
+            data["NPL_status"]
+        )
+        new_user.id = data["id"]
+        return new_user
 
 # load chat sessions from data/chats.json, simulating a database
-def load_chats():
-    with open('data/chats.json') as f:
-        chats = json.load(f)
-    return chats
-
-def save_chats(chats):
-    with open('data/chats.json', 'w') as f:
-        json.dump(chats, f, indent=4)
-
-async def find_chat(id: int) -> dict|None:
-    chats = load_chats()
-    chat = next((chat for chat in chats if chat["id"] == id), None)
-    return chat
-
 CHAT_DATA_PATH = 'data/chats.json'
 
-class ChatDB {
-    def __init__(self):
+class ChatDB:
+    def __init__(self, db_path):
         self.data : Chat[] = []
+        self.db_path = db_path
+        self.load_from_file(db_path)
 
-    def load_from_file(self, db_path):
+    def load_from_file(self, db_path) -> None:
         with open(db_path, 'r') as f:
             chat_json = json.load(f)
 
@@ -41,7 +86,7 @@ class ChatDB {
                 chat = Chat.from_dict(item)
                 self.data.append(chat)
 
-    def save_to_file(self, db_path):
+    def save_to_file(self, db_path) -> None:
         chat_json = []
         for chat in self.data:
             item = chat.get_as_dict()
@@ -50,17 +95,56 @@ class ChatDB {
             with open(db_path, 'w') as f:
                 json.dump(chat_json, f, indent=4)
 
-    def get_last_chat(self): 
+    def get_last_chat(self) -> Chat|None: 
         if len(self.data)>0:
             return self.data[-1]
 
-    def get_chat_by_id(self, )
+    def get_chat_by_id(self, id: int) -> Chat|None:
+        for chat in self.data:
+            if chat.id == id:
+                return chat
 
+    def update_chat(self, chat: Chat, persist=True) -> None:
+        for (index, c) in enumerate(self.data):
+            if c.id == chat.id:
+                self.data[index] = chat
 
+                if persist:
+                    self.save_to_file(self.db_path)
 
-class Chat {
+                return
+
+    def add_chat(self, chat: Chat, persist=True) -> None:
+        last_chat = self.get_last_chat()
+        if last_chat:
+            chat.id = last_chat.id + 1
+        else:
+            chat.id = 1
+
+        self.data.append(chat)
+
+        if persist:
+            self.save_to_file(self.db_path)
+
+    def delete_chat(self, id: int|None = None, chat: Chat|None = None, persist=True) -> None:
+        if id:
+            for (index, c) in enumerate(self.data):
+                if c.id == id:
+                    del self.data[index]
+                    if persist:
+                        self.save_to_file(self.db_path)
+                    return
+        elif chat:
+            for (index, c) in enumerate(self.data):
+                if c.id == chat.id:
+                    del self.data[index]
+                    if persist:
+                        self.save_to_file(self.db_path)
+                    return
+
+class Chat:
     def __init__(self, chat_id, user_id, thread_id):
-        self.id = chat_id
+        self.id: int = chat_id
         self.user_id = user_id
         self.openai_thread_id = thread_id
         self.chat_messages = []
@@ -94,45 +178,17 @@ class Chat {
         new_chat.last_context = data["last_context"]
         new_chat.openai_run_id = data["openai_run_id"]
         return new_chat
-}
+
+user_db = UserDB(USER_DATA_PATH)
+chat_db = ChatDB(CHAT_DATA_PATH)
 
 async def create_chat(user_id: int, thread_id: str) -> dict:
-    # find the last chat id
-    chats = load_chats()
-    if len(chats)>0:
-        last_chat = chats[-1]
-
-
-        last_chat_id = last_chat["id"]
-        new_chat_id = last_chat_id + 1
-    else:
-        new_chat_id = 1
-
-    
-
-    new_chat = {
-        "id": new_chat_id,
-        "user_id": user_id,
-        "openai_thread_id": thread_id,
-        "chat_messages": [],
-        "assistant_logs": [],
-        "status": "done",
-        "last_context": "",
-        "openai_run_id": []
-        }
-
-    chats.append(new_chat)
-    save_chats(chats)
+    new_chat = new Chat(0, user_id, thread_id)
+    chat_db.add_chat(new_chat)
     return new_chat
 
-async def update_chat(chat: dict):
-    chats = load_chats()
-    chat_index = next((index for (index, c) in enumerate(chats) if c["id"] == chat["id"]), None)
-    chats[chat_index] = chat
-    save_chats(chats)
+async def update_chat(chat: Chat):
+    chat_db.update_chat(chat)
 
 async def delete_chat(id: int):
-    chats = load_chats()
-    chat_index = next((index for (index, c) in enumerate(chats) if c["id"] == id), None)
-    del chats[chat_index]
-    save_chats(chats)
+    chat_db.delete_chat(id=id)
