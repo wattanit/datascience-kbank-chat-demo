@@ -79,7 +79,7 @@ async def get_chat_response(id: int):
         logging.warning("Chat not found: id = {}".format(id))
         raise HTTPException(status_code=404, detail="Chat not found")
 
-    if !chat.isRunning:
+    if not chat.isRunning:
         return {
             "status": "ready",
             "action": "no_run",

@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 import json
-from server.db import load_users, find_user
 from server.db import USER_DB
 
 router = APIRouter()

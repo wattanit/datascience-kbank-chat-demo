@@ -2,6 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from dotenv import load_dotenv
 import logging
+import os
 from server.user import router as user_router
 from server.chat.basic import router as chat_router
 from server.chat.context import router as context_router
