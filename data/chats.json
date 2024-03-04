@@ -6,6 +6,7 @@
         "chat_messages": [],
         "assistant_logs": [],
         "status": "done",
+        "chat_context": 0,
         "last_context": "",
         "last_promotions": "",
         "openai_run_id": []

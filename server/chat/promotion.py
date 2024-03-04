@@ -31,8 +31,22 @@ async def get_chat_promotions(id: int):
     last_context = chat.get_last_context()
     first_thing = last_context["top_5_things"][0]
 
+    
+
+    def get_second_query(chat):
+        if chat.chat_context == 1 or chat.chat_context == "1":
+            first_thing = last_context["product_type"][0]
+            return first_thing
+        elif chat.chat_context == 2 or chat.chat_context == "2":
+            first_thing = last_context["top_5_things"][0]
+            return first_thing
+        elif chat.chat_context == 3 or chat.chat_context == "3":
+            first_thing = last_context["top_5_things"][0]
+            return first_thing
+        else:
+            return ""
     q1 = last_user_message
-    q2 = first_thing
+    q2 = get_second_query(chat)
 
     logging.info("Querying promotions: q1={}, q2={}".format(q1, q2))
     chat.add_assistant_log("promotions_query", "Querying promotions: q1={}, q2={}".format(q1, q2))

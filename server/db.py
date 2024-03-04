@@ -120,6 +120,7 @@ class Chat:
         self.chat_messages: list[ChatMessage] = []
         self.assistant_logs: list[AssistantLog] = []
         self.status = "ready"
+        self.chat_context = 0
         self.last_context = ""
         self.last_promotions = ""
         self.openai_run_id: list[str] = []
@@ -132,6 +133,7 @@ class Chat:
             "chat_messages": [message.get_as_dict() for message in self.chat_messages],
             "assistant_logs": [log.get_as_dict() for log in self.assistant_logs],
             "status": self.status,
+            "chat_context": self.chat_context,
             "last_context": self.last_context,
             "last_promotions": self.last_promotions,
             "openai_run_id": self.openai_run_id
@@ -147,6 +149,7 @@ class Chat:
         new_chat.chat_messages = [ChatMessage.from_dict(message) for message in data["chat_messages"]]
         new_chat.assistant_logs = [AssistantLog.from_dict(log) for log in data["assistant_logs"]]
         new_chat.status = data["status"]
+        new_chat.chat_context = data["chat_context"]
         new_chat.last_context = data["last_context"]
         new_chat.last_promotions = data["last_promotions"]
         new_chat.openai_run_id = data["openai_run_id"]

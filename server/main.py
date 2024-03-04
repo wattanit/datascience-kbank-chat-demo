@@ -6,6 +6,7 @@ import os
 from server.user import router as user_router
 from server.chat.basic import router as chat_router
 from server.chat.context import router as context_router
+from server.chat.specialist import router as specialist_router
 from server.chat.promotion import router as promotion_router
 from server.chat.nice_talk import router as nice_talk_router
 
@@ -20,6 +21,7 @@ app = FastAPI()
 app.include_router(user_router)
 app.include_router(chat_router)
 app.include_router(context_router)
+app.include_router(specialist_router)
 app.include_router(promotion_router)
 app.include_router(nice_talk_router)
 
