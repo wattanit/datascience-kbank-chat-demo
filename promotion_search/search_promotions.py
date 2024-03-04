@@ -27,7 +27,7 @@ def get_max_key(dictionary):
     return {"related_key": max_key, "score": dictionary[max_key]}
 
 
-def get_promotions_scores(embedded_word, promotions, embed_promotions):
+def get_promotions_scores(embedded_word, promotions, embed_promotions, vector_columns):
     """
     Calculate similarity scores between an embedded word and a list of embedded promotions.
 
@@ -44,11 +44,11 @@ def get_promotions_scores(embedded_word, promotions, embed_promotions):
     for promotion in embed_promotions:
         similarity = {}
         for embed_key in promotion:
-            if embed_key != "index":
+            if embed_key in vector_columns:
                 similarity[embed_key] = calculate_similarity(
                     embedded_word, promotion[embed_key]
                 )
-            else:
+            elif embed_key == "index":
                 similarity["index"] = promotion[embed_key]
 
         similarity_scores.append(get_max_key(similarity))
@@ -77,7 +77,9 @@ def sort_promotions_by_scores(promotions_with_scores):
     return sorted_promotions_with_scores
 
 
-def search_related_promotions(query_word, promotions, embed_promotions, client):
+def search_related_promotions(
+    query_word, promotions, embed_promotions, vector_columns, client
+):
     """
     Searches for related promotions based on a query word.
 
@@ -95,8 +97,11 @@ def search_related_promotions(query_word, promotions, embed_promotions, client):
     )
 
     promotions_with_scores = get_promotions_scores(
-        query_word_embedding, promotions, embed_promotions
+        query_word_embedding, promotions, embed_promotions, vector_columns
     )
+
+    for _promotion in promotions_with_scores:
+        _promotion["query_word"] = query_word
 
     sorted_promotions_with_scores = sort_promotions_by_scores(promotions_with_scores)
 
