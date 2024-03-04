@@ -7,7 +7,7 @@
     "customer_segment": "วัยกลางคน",
     "NPL_status": "",
     "credit_cards": [
-      "The Passion"
+      "Kbank The Passion"
     ]
   },
   {
@@ -18,7 +18,7 @@
     "customer_segment": "วัยเกษียณ",
     "NPL_status": "",
     "credit_cards": [
-      "The Wisdom"
+      "Kbank The Wisdom"
     ]
   },
   {
@@ -29,8 +29,8 @@
     "customer_segment": "วัยรุ่น",
     "NPL_status": "",
     "credit_cards": [
-      "Linepoint",
-      "PLATINUM กสิกรไทย"
+      "Kbank Linepoint",
+      "Kbank PLATINUM"
     ]
   },
   {
@@ -41,7 +41,6 @@
     "customer_segment": "วัยรุ่น",
     "NPL_status": "NPL",
     "credit_cards": [
-      "The Passion"
     ]
   }
 ]
