@@ -9,11 +9,13 @@
         "promotion_title": "วาเลนไทน์นี้ ให้คุณสนุก X2 ด้วย KBank Reward Point",
         "shop": "เมเจอร์ ซีนีเพล็กซ์\nMajor Cineplex  \nอีจีวี\nEGV\nเอส เอฟ\nSF\n",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "14 ก.พ. 63",
-        "end_date": "29 ก.พ. 63",
+        "start_date": "2020-02-14 00:00:00",
+        "end_date": "2020-02-29 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "ประเทศไทย",
-        "age": "วัยรุ่น"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/others\/publishingimages\/valentinesfmajor_2280x980.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/others\/pages\/valentinesfmajor.aspx",
+        "customer_segment": "วัยรุ่น"
     },
     {
         "index": 1,
@@ -25,11 +27,13 @@
         "promotion_title": "เป็นเจ้าของเพชรในฝันได้ง่ายๆ รับดีลดี ห้ามพลาด!",
         "shop": "Jubilee, Prima, For U Jewelry, Ananta Jewelry, Dilavie, Regent Diamond, Asawa Dianond, JTD Diamond, Rose Jewelry Studio, Elizabeth jewelry, Trocadero Time, CR Diamond, NGG, Petch Gub Tong, Phattara Menee, Oriental Diamond",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "1 ก.พ. 66",
-        "end_date": "30 เม.ย. 66",
+        "start_date": "2023-02-01 00:00:00",
+        "end_date": "2023-04-30 00:00:00",
         "registration_process": "สงวนสิทธิ์เฉพาะผู้ถือบัตรเครดิตกสิกรไทยที่ลงทะเบียนเข้าร่วมโครงการ ผ่าน SMS พิมพ์ DMA (เว้นวรรค) ตามด้วยหมายเลขบัตรเครดิต 12 หลักสุดท้าย ส่งมาที่ 4545888 และได้รับข้อความตอบกลับก่อนทำรายการ ตั้งแต่วันที่ 1 ก.พ. 66 – 30 เม.ย. 66 เท่านั้น",
         "shop_location": "ประเทศไทย",
-        "age": "วัยกลางคน"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/publishingimages\/diamond010223_2280x980px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/pages\/diamond010223.aspx",
+        "customer_segment": "วัยกลางคน"
     },
     {
         "index": 2,
@@ -41,11 +45,13 @@
         "promotion_title": "JD Central Valentine",
         "shop": "ช้อปผ่าน www.jd.co.th หรือ JD Central Mobile Website หรือ JD Central Mobile Application",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "1 ก.พ. 65",
-        "end_date": "28 ก.พ. 65 ",
+        "start_date": "2022-02-01 00:00:00",
+        "end_date": "2022-02-28 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "Online",
-        "age": "All"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/online\/publishingimages\/jdcentral02022022_2280x980px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/online\/pages\/jdcentral02022022.aspx",
+        "customer_segment": "All"
     },
     {
         "index": 3,
@@ -57,11 +63,13 @@
         "promotion_title": "Grab Food Dine-In Valentine sweet guide\nเดทร้านดัง ได้ดีลฉ่ำทั้งเดือน",
         "shop": "Grab Food",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "5 ก.พ. 67",
-        "end_date": "30 มิ.ย.67",
+        "start_date": "2024-02-05 00:00:00",
+        "end_date": "2024-06-30 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "Online",
-        "age": "วัยรุ่น"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/SiteCollectionDocuments\/promotion\/grab-mega-q1-2024\/img\/2280x1000px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/Pages\/grabfood-dine-in-2024-1h.aspx",
+        "customer_segment": "วัยรุ่น"
     },
     {
         "index": 4,
@@ -73,11 +81,13 @@
         "promotion_title": "เที่ยวญี่ปุ่นสุขเกินคาด กิน เที่ยว ช็อป",
         "shop": "ร้านค้าในประเทศญี่ปุ่น",
         "credit_card": "JCB Platinum",
-        "start_date": "1 ก.พ. 67",
-        "end_date": "30 เม.ย. 67",
+        "start_date": "2024-02-01 00:00:00",
+        "end_date": "2024-04-30 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "Japan",
-        "age": "วัยกลางคน"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/publishingimages\/jcbjapan010224_2280x1000.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/pages\/jcbjapan010224.aspx",
+        "customer_segment": "วัยกลางคน"
     },
     {
         "index": 5,
@@ -89,11 +99,13 @@
         "promotion_title": "สุขกับเทศกาล รับดีลพิเศษ ในงาน GAYSORN CHRISTMAS VILLAGE รับ K Point เพิ่มสูงสุด 25,000 คะแนน + แลกรับเครดิตเงินคืน 12% ที่ ศูนย์การค้า GAYSORN VILLAGE",
         "shop": "ศูนย์การค้า GAYSORN VILLAGE",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "15 พ.ย. 66",
-        "end_date": "7 ม.ค. 67",
+        "start_date": "2023-11-15 00:00:00",
+        "end_date": "2024-01-07 00:00:00",
         "registration_process": "วิธีการลงทะเบียน\nพิมพ์ SPC (วรรค) หมายเลขบัตรเครดิต 12 หลักสุดท้าย (วรรค)\n​จำนวนคะแนนที่ต้องการแลก ส่งมาที่ 4545888 (ครั้งละ 3 บาท)",
         "shop_location": "กรุงเทพ",
-        "age": "วัยเกษียณ"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/publishingimages\/gaysorn09112023_2280x1000px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/pages\/gaysorn09112023.aspx",
+        "customer_segment": "วัยเกษียณ"
     },
     {
         "index": 6,
@@ -105,11 +117,13 @@
         "promotion_title": "ช้อปจิวเวลรี่คริสต์มาสนี้ รับดีลสุดอลัง 4 วันเท่านั้น",
         "shop": "โรงแรม Sofitel Bangkok Sukhumvit",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "22 ธ.ค. 65",
-        "end_date": "25 ธ.ค. 65",
+        "start_date": "2022-12-22 00:00:00",
+        "end_date": "2022-12-25 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "กรุงเทพ",
-        "age": "วัยเกษียณ"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/publishingimages\/jubilee19122022_2280x980px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/Pages\/jubilee19122022.aspx",
+        "customer_segment": "วัยเกษียณ"
     },
     {
         "index": 7,
@@ -121,11 +135,13 @@
         "promotion_title": "โรงแรมเดอะ เซนต์ รีจิส กรุงเทพฯ ขอต้อนรับเทศกาลในเดือนธันวาคม สำหรับลูกค้าเดอะวิสดอมกสิกรไทยด้วยโปรโมชัน\nส่วนลด 15% สำหรับโปรโมชั่นมื้ออาหาร (เฉพาะค่าอาหาร) และ กล่องของขวัญในเทศกาลปลายปี",
         "shop": "โรงแรมเดอะ เซนต์ รีจิส กรุงเทพ",
         "credit_card": "The Wisdom (Visa Infinite)\nThe Wisdom",
-        "start_date": "6 ธ.ค. 66",
-        "end_date": "1 ม.ค. 67",
+        "start_date": "2023-12-06 00:00:00",
+        "end_date": "2024-01-01 00:00:00",
         "registration_process": "วิธีการรับสิทธิ์ :\nสมัครบริการ THE WISDOM Privilege บนแอปพลิเคชัน LINE KBank Live\nเข้าสู่ LINE KBank Live เข้าเลือกเมนู THE WISDOM Privilege (รูปกล่องของขวัญ)\nเลือกสิทธิพิเศษที่ต้องการ หรือ คลิกที่นี่(เมื่อใช้งานบนโทรศัพท์มือถือ) จากนั้นกดรับสิทธิ์ และ กดปุ่มยืนยัน\nแสดงรหัสโปรโมชั่นใต้ QR CODE และบัตรเดอะวิสดอมกสิกรไทยต่อเจ้าหน้าที่สาขาก่อนชำระสินค้า \n* กรุณาจองสิทธิ์ล่วงหน้า 3 วัน และ ชำระเงินเต็มจำนวนก่อนเข้าใช้บริการ",
         "shop_location": "กรุงเทพ",
-        "age": "วัยรุ่น\nวัยกลางคน"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/personal\/the-wisdom\/Privileges\/special-privileges\/Recommended\/PublishingImages\/Onward84_2023\/08_st.Regis_Dec2023_Banner.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/personal\/the-wisdom\/privileges\/special-privileges\/recommended\/pages\/onward84_the-st--regis-bangkok_2023.aspx",
+        "customer_segment": "วัยรุ่น\nวัยกลางคน"
     },
     {
         "index": 8,
@@ -137,11 +153,13 @@
         "promotion_title": "สาดสุข สงกรานต์",
         "shop": "ห้างสรรพสินค้าโรบินสันทุกสาขา",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "7 เม.ย. 64",
-        "end_date": "20 เม.ย. 64",
+        "start_date": "2021-04-07 00:00:00",
+        "end_date": "2021-04-20 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "ประเทศไทย",
-        "age": "วัยรุ่น"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/publishingimages\/robinsonsongkransale07042021_2280x980.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/pages\/robinsonsongkransale07042021.aspx",
+        "customer_segment": "วัยรุ่น"
     },
     {
         "index": 9,
@@ -153,11 +171,13 @@
         "promotion_title": "ช็อปไอเท็มฮอตรับซัมเมอร์กับ lazada 4.4",
         "shop": "lazada",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "4 เม.ย. 66",
-        "end_date": "5 เม.ย. 66",
+        "start_date": "2023-04-04 00:00:00",
+        "end_date": "2023-04-05 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "ประเทศไทย",
-        "age": "วัยรุ่น"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/online\/publishingimages\/lazada040423_2280x1000px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/online\/pages\/lazada040423.aspx",
+        "customer_segment": "วัยรุ่น"
     },
     {
         "index": 10,
@@ -169,11 +189,13 @@
         "promotion_title": "สาดดีลเด็ด รับสงกรานต์ ถอยคอสตูมใหม่ รับ K Point จุก สูงสุด x5",
         "shop": "Advice, AIS Online Store, Banana IT, BnB Home, CENTRAL APP, DO Home, dtac online Store, Firster, Freshket, Gourmet Market, H&M Online, Home Pro Online, Ikea, Index Living Mall, JIB, King Power Online, Lotus's Shop Online, MOnline.com, Nocnoc.Com, Power Buy, Studio7 thailand.com, SCG Home, SCG Home Experience, Sephora, SB Design Square, topvalue.com, True Online Store, TV Direct, Villa Market, Zara, ตลาดไท ออนไลน์, บุญถาวร.com, ไทวัสดุ",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "1 มี.ค. 66",
-        "end_date": " 31 พ.ค. 66",
+        "start_date": "2023-03-01 00:00:00",
+        "end_date": "2023-05-31 00:00:00",
         "registration_process": "วิธีการลงทะเบียน\nพิมพ์ OL เว้นวรรค ตามด้วยหมายเลขบัตรเครดิต 12 หลักสุดท้าย ส่งมาที่ 4545888 (ครั้งละ 3 บาท)",
         "shop_location": "ประเทศไทย",
-        "age": "วัยรุ่น\nวัยกลางคน"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/online\/publishingimages\/songkran010423_2280x1000px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/online\/pages\/songkran010423.aspx",
+        "customer_segment": "วัยรุ่น\nวัยกลางคน"
     },
     {
         "index": 11,
@@ -185,11 +207,13 @@
         "promotion_title": "เติมน้ำมันบางจาก ใช้พ้อยท์แลกได้",
         "shop": "ปั๊มน้ำมันบางจาก\nBangchak Station",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "1 ม.ค. 67",
-        "end_date": "31 ธ.ค. 67",
+        "start_date": "2024-01-01 00:00:00",
+        "end_date": "2024-12-31 00:00:00",
         "registration_process": "ไม่ต้องลงทะเบียน",
         "shop_location": "ประเทศไทย",
-        "age": "All"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/others\/publishingimages\/bangchak011223_2280x1000px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/others\/pages\/bangchak011223.aspx",
+        "customer_segment": "All"
     },
     {
         "index": 12,
@@ -201,10 +225,84 @@
         "promotion_title": "Smart Education with Wall Street English เรียนสนุก จ่ายสบาย รับดีลคุ้ม",
         "shop": "Wall Street English Academy",
         "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
-        "start_date": "1 ม.ค. 67",
-        "end_date": "31 ธ.ค. 67",
+        "start_date": "2024-01-01 00:00:00",
+        "end_date": "2024-12-31 00:00:00",
         "registration_process": "วิธีการลงทะเบียนรับสิทธิพิเศษที่ 1\nพิมพ์ WS1 เว้นวรรค ตามด้วยหมายเลขบัตรเครดิต 12 หลักสุดท้าย ส่งมาที่ 4545888 (ครั้งละ 3 บาท) ก่อนทำรายการ\nตัวอย่างการพิมพ์ ส่ง SMS พิมพ์ WS1 123456789999\n\nวิธีการลงทะเบียนรับสิทธิพิเศษที่ 2\nพิมพ์ ED (วรรค) หมายเลขบัตรเครดิต 12 หลักสุดท้าย (วรรค)\n​จำนวนยอดใช้จ่าย (ไม่ใส่จุดทศนิยม) ส่งมาที่ 4545888 (ครั้งละ 3 บาท)\nตัวอย่าง คุณ ก. ใช้จ่ายผ่านบัตร 3,000.50 บาท ผ่านบัตรเครดิตหมายเลข XXXX123456789999 คุณ ก. จะต้องส่ง SMS แลกคะแนนโดยพิมพ์ ED 123456789999 3000 ส่งมาที่ 4545888 หากมีคะแนนสะสมเพียงพอ ธนาคารจะตัดคะแนน และดำเนินการเครดิตเงินคืนจำนวน [3000 x 10%] = 300 บาท",
         "shop_location": "กรุงเทพ",
-        "age": "All"
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/others\/publishingimages\/wallstreet010224_2280x980px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/others\/Pages\/wallstreet010224.aspx",
+        "customer_segment": "All"
+    },
+    {
+        "index": 13,
+        "bank_name_en": "KBank",
+        "bank_name_th": "กสิกรไทย",
+        "promotion_category": "ช้อปปิ้ง",
+        "special_day": "-",
+        "promotion_description": "ลดสูงสุด 20%* เฉพาะศุกร์-อาทิตย์\nเพียงใช้ K Point K Point เท่ากับยอดซื้อ\n- บัตร The Wisdom\n-- เพียงใช้ K Point เท่ากับยอดซื้อ 1-4,999 บาท\/เซลส์สลิป รับส่วนลด 12%\n-- เพียงใช้ K Point เท่ากับยอดซื้อ 5,000-10,000 บาท\/เซลส์สลิป รับส่วนลด 20%\n- บัตรเครดิตประเภทอื่นๆ\n-- เพียงใช้ K Point เท่ากับยอดซื้อ 1-4,999 บาท\/เซลส์สลิป รับส่วนลด 12%\n-- เพียงใช้ K Point เท่ากับยอดซื้อ 5,000-10,000 บาท\/เซลส์สลิป รับส่วนลด 17%",
+        "promotion_title": "พุ่งตัวไปช้อปด้วยบัตรเครดิตวีซ่ากสิกรไทย ลดสูงสุด 20% เพียงใช้ K Point แลกเท่ายอดซื้อ ที่ร้านค้าในเครือเซ็นทรัล รีเทล",
+        "shop": "ห้างสรรพสินค้าเซ็นทรัล, ห้างสรรพสินค้าโรบินสัน, ท็อปส์, ท็อปส์ ฟู้ด ฮอลล์, ท็อปส์ ไฟน์ ฟู้ด, ไทวัสดุ, บีเอ็นบี โฮม, ซูเปอร์สปอร์ต, เพาเวอร์บาย ทุกสาขา",
+        "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
+        "start_date": "2024-01-19 00:00:00",
+        "end_date": "2024-03-10 00:00:00",
+        "registration_process": "ไม่ต้องลงทะเบียน",
+        "shop_location": "ประเทศไทย",
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/others\/publishingimages\/wallstreet010224_2280x980px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/Pages\/centralretail050124.aspx",
+        "customer_segment": "All"
+    },
+    {
+        "index": 14,
+        "bank_name_en": "KBank",
+        "bank_name_th": "กสิกรไทย",
+        "promotion_category": "ช้อปปิ้งไอที",
+        "special_day": "-",
+        "promotion_description": "พิเศษที่ 1 รับคะแนน K Point K Point สูงสุด 150,000 คะแนน\nเมื่อแบ่งจ่ายรายเดือนผ่าน KBank Smart Pay 0% นาน 10 เดือน รับ K Point ดังนี้\n- ตั้งแต่ 10,000 บาท ขึ้นไป รับคะแนน K Point 2,000 คะแนน \n- ตั้งแต่ 20,000 บาท ขึ้นไป รับคะแนน K Point 4,500 คะแนน \n- ตั้งแต่ 30,000 บาท ขึ้นไป รับคะแนน K Point 7,500 คะแนน \n- ตั้งแต่ 35,000 บาท ขึ้นไป รับคะแนน K Point 9,000 คะแนน\n- ตั้งแต่ 45,000 บาท ขึ้นไป รับคะแนน K Point 15,000 คะแนน\nพิเศษที่ 2 รับเครดิตเงินคืน 10% เพียงใช้คะแนน K Point แลกเท่ายอดใช้จ่าย\n",
+        "promotion_title": "สายไอที ไม่พลาด ไอเทมเด็ดดีลคุ้ม",
+        "shop": "Advice IT, BaNANA, IT City, Jaymart, JIB, Speed Computer, TG Computer",
+        "credit_card": "KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier",
+        "start_date": "2024-02-01 00:00:00",
+        "end_date": "2024-04-30 00:00:00",
+        "registration_process": "วิธีการลงทะเบียนสำหรับ พิเศษที่ 1\nพิมพ์ AV1 (วรรค) ตามด้วยหมายเลขบัตรเครดิต 12 หลักสุดท้าย ส่งมาที่ 4545888\nตัวอย่างการพิมพ์ ส่ง SMS พิมพ์ AV1 123456789999\nวิธีการลงทะเบียนสำหรับ พิเศษที่ 2\nพิมพ์ BCB (วรรค) หมายเลขบัตรเครดิต 12 หลักสุดท้าย (วรรค)\n​จำนวนยอดใช้จ่าย (ไม่ใส่จุดทศนิยม) ส่งมาที่ 4545888 (ครั้งละ 3 บาท)",
+        "shop_location": "ประเทศไทย",
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/home-decor\/publishingimages\/smartitoffline010224_2280x980px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/home-decor\/Pages\/smartitoffline010224.aspx",
+        "customer_segment": "All"
+    },
+    {
+        "index": 15,
+        "bank_name_en": "KBank",
+        "bank_name_th": "กสิกรไทย",
+        "promotion_category": "ช้อปปิ้ง",
+        "special_day": "-",
+        "promotion_description": "สิทธิพิเศษสำหรับบัตรเครดิตกสิกรไทย\nต่อที่ 1 แลกรับส่วนลดเพิ่มสูงสุด 15% เพียงใช้คะแนนสะสมเท่ายอดซื้อ\/เซลส์สลิป\n- 1 - 4,999 บาท รับส่วนลดเพิ่ม 12%\n- 5,000 บาทขึ้นไป รับส่วนลดเพิ่ม 15%\nต่อที่ 2 รับเครดิตเงินคืนสูงสุด 2,000 บาท เมื่อช้อปครบ\/เซลส์สลิป\n- 4,000 บาทขึ้นไป รับเครดิตเงินคืน 100 บาท\n- 10,000 บาทขึ้นไป รับเครดิตเงินคืน 300 บาท\n- 10,000 บาทขึ้นไป รับเครดิตเงินคืน 1000 บาท\nพิเศษ เฉพาะบัตรเดอะวิสดอมกสิกรไทย\nเมื่อช้อปครบ 50,000 บาทขึ้นไป\/เซลส์สลิป รับเครดิตเงินคืน 2,000 บาท",
+        "promotion_title": "CENTRAL THE 1 X-TREME ที่ ห้างสรรพสินค้าเซ็นทรัล ทุกสาขา",
+        "shop": "ห้างสรรพสินค้าเซ็นทรัล ทุกสาขา, Central Chat & Shop, Central Call & Shop",
+        "credit_card": "\"KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier\"",
+        "start_date": "2024-03-01 00:00:00",
+        "end_date": "2024-09-27 00:00:00",
+        "registration_process": "SMS ลงทะเบียน\nพิมพ์ CZ (วรรค) ตามด้วยหมายเลขบัตรเครดิต 12 หลักสุดท้ายส่งมาที่ 4545888 (ครั้งละ 3 บาท)\nตัวอย่าง CZ 123456789101",
+        "shop_location": "ประเทศไทย",
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/publishingimages\/centralthe115092020_2280x980.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/shopping\/pages\/centralthe115092020.aspx",
+        "customer_segment": "All"
+    },
+    {
+        "index": 16,
+        "bank_name_en": "KBank",
+        "bank_name_th": "กสิกรไทย",
+        "promotion_category": "ช้อปปิ้งไอที",
+        "special_day": "-",
+        "promotion_description": "สิทธิพิเศษสำหรับลูกค้าบัตรกสิกร\nใช้บัตรผ่อนมือถือ Samsung Galaxy S24 ฟรีดอกเบี้ย 0% นาน 36 เดือน\nกู้เท่าที่จำเป็น และชำระคืนได้ตามกำหนด จะได้ไม่เสียดอกเบี้ย 18%-25% ต่อปี *เมื่อลูกค้าชำระเต็มจำนวนภายในวันครบกำหนดชำระ",
+        "promotion_title": "ผ่อน Samsung Galaxy S24 ใหม่ ฟรีดอกเบี้ย 0% นาน 36 เดือน",
+        "shop": "AIS \/ Telewiz\nBaNANA\nDTAC\nJaymart Mobile\nJ.I.B. Computer\nKingkong Phone\nTG Fone\nTrue (ผ่อน 0% 24 เดือน)",
+        "credit_card": "\"KBank Platinum\nLine Points\nShopee\nBlue\nThe Passion\nOneSiam Platinum\nOneSiam Signature\nOneSiam Infinite\nJCB Platinum\nK-Wave NFC\nUnionPay\nTitanium\nKing Power Platinum\nKing Power Signature\nBDMS\nCGA \/ SFT\nAmway\nThammasat University\nMTL Pink (Platinum)\nMTL Pink Gold (Signature) \nThe Wisdom (Visa Infinite)\nThe Wisdom\nThe Premier\"",
+        "start_date": "2024-03-01 00:00:00",
+        "end_date": "2024-09-27 00:00:00",
+        "registration_process": "ไม่ต้องลงทะเบียน",
+        "shop_location": "ประเทศไทย",
+        "promotion_banner": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/split_payment_promotion\/publishingimages\/galaxys24_2280x980px.jpg",
+        "promotion_link": "https:\/\/www.kasikornbank.com\/th\/promotion\/credit-card\/split_payment_promotion\/Pages\/galaxys24.aspx",
+        "customer_segment": "All"
     }
 ]
