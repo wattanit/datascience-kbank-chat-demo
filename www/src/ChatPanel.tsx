@@ -186,6 +186,8 @@ function ChatPanel (props: StateProps & {
     let monitor = ()=>{
         if (chatStatus === "ask_context") {
             getContext();
+        } else if (chatStatus == "ask_context_details") {
+            getContextDetails();
         } else if (chatStatus === "ask_promotion") {
             getPromotion();
         } else if (chatStatus === "ask_response") {
@@ -255,7 +257,18 @@ function ChatPanel (props: StateProps & {
         .then(data => {
             console.log(data);
             if (data.action === "context_found") {
-                setChatStatus("ask_promotion");
+                // trigger server to generate context detais
+                fetch(`/api/chat/${props.chatId}/create_context_details`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                })
+                .then(response => {return response.json()})
+                .then(data => {
+                    setChatStatus("ask_context_details");
+                });
+
             }else if (data.action === "follow_up_question") {
                 setChatStatus("ready");
                 let oldMessages = messages;
@@ -267,6 +280,40 @@ function ChatPanel (props: StateProps & {
                 // setChatStatus("ready");
                 // let oldMessages = messages;
                 // let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ไม่เข้าใจคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
+                // setMessages(newMessages);
+            }
+        })
+    }
+
+    let getContextDetails = ()=>{
+        if (chatStatus !== "ask_context_details") {
+            return;
+        }
+
+        console.log("get context details");
+
+        fetch(`/api/chat/${props.chatId}/get_context_details`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {return response.json()})
+        .then(data => {
+            console.log(data);
+            if (data.action === "context_details_found") {
+                setChatStatus("ask_promotion");
+            }else if (data.action === "follow_up_question") {
+                setChatStatus("ready");
+                let oldMessages = messages;
+                let newMessages = [...oldMessages, {type: "assistant", message: data.message}];
+                setMessages(newMessages);
+            }else if (data.status === "running") {
+                // do nothing
+            }else{
+                // setChatStatus("ready");
+                // let oldMessages = messages;
+                // let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ไม่พบข้อมูลที่ต้องการ คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
                 // setMessages(newMessages);
             }
         })
