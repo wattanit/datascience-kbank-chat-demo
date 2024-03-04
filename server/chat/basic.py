@@ -28,7 +28,7 @@ async def post_chat(body: NewChatPayload):
         })
 
     if response.status_code != 200:
-        logging.warning("OpenAI thread creation failed: {}".format(response.status_code))
+        logging.warning("OpenAI thread creation failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI thread creation failed")
 
     response = response.json()
@@ -68,7 +68,7 @@ async def delete_chat(id: int):
         })
 
     if response.status_code != 200:
-        logging.warning("OpenAI thread deletion failed: {}".format(response.status_code))
+        logging.warning("OpenAI thread deletion failed: code{}, {}".format(response.status_code, response.json()))
         return {}
     
     response = response.json()

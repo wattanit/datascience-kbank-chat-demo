@@ -29,9 +29,7 @@ async def get_chat_promotions(id: int):
         }
 
     last_context = chat.get_last_context()
-    first_thing = last_context["top_5_things"][0]
-
-    
+    q1 = last_user_message
 
     def get_second_query(chat):
         if chat.chat_context == 1 or chat.chat_context == "1":
@@ -45,7 +43,6 @@ async def get_chat_promotions(id: int):
             return first_thing
         else:
             return ""
-    q1 = last_user_message
     q2 = get_second_query(chat)
 
     logging.info("Querying promotions: q1={}, q2={}".format(q1, q2))
@@ -55,7 +52,7 @@ async def get_chat_promotions(id: int):
     response = requests.get("http://localhost:8001/api/search", params={"q1": q1, "q2": q2})
 
     if response.status_code != 200:
-        logging.warning("Promotion search engine failed: {}".format(response))
+        logging.warning("Promotion search engine failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="Promotion search engine failed")
 
     response = response.json()

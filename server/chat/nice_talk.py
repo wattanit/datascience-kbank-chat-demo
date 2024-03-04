@@ -38,7 +38,7 @@ async def create_promotions_text(id: int):
     })
 
     if response.status_code != 200:
-        logging.warning("OpenAI message creation failed: {}".format(response))
+        logging.warning("OpenAI message creation failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI message creation failed")
 
     chat.add_assistant_log("ask_for_promotion_text", "AI is asked to describe the promotion")
@@ -56,7 +56,7 @@ async def create_promotions_text(id: int):
     })
 
     if response.status_code != 200:
-        logging.warning("OpenAI run creation failed: {}".format(response))
+        logging.warning("OpenAI run creation failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI run creation failed")
 
     response = response.json()
@@ -111,7 +111,7 @@ async def get_chat_response(id: int):
     })
     
     if response.status_code != 200:
-        logging.warning("OpenAI run status failed: {}".format(response))
+        logging.warning("OpenAI run status failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI run status failed")
     
     response = response.json()
@@ -136,7 +136,7 @@ async def get_chat_response(id: int):
     })
 
     if response.status_code != 200:
-        logging.warning("OpenAI message retrieval failed: {}".format(response))
+        logging.warning("OpenAI message retrieval failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI message retrieval failed")
 
     response = response.json()

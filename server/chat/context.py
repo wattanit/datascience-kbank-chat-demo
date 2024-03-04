@@ -51,7 +51,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
         })
 
     if response.status_code != 200:
-        logging.warning("OpenAI message creation failed: {}".format(response))
+        logging.warning("OpenAI message creation failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI message creation failed")
 
     # call OpenAI to create a new run
@@ -68,7 +68,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
             })
 
         if response.status_code != 200:
-            logging.warning("OpenAI run creation failed: {}".format(response))
+            logging.warning("OpenAI run creation failed: code{}, {}".format(response.status_code, response.json()))
             raise HTTPException(status_code=500, detail="OpenAI run creation failed")
 
         response = response.json()
@@ -117,7 +117,7 @@ async def get_chat_context(id: int):
         })
 
     if response.status_code != 200:
-        logging.warning("OpenAI run status failed: {}".format(response))
+        logging.warning("OpenAI run status failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI run status failed")
 
     response = response.json()
@@ -142,7 +142,7 @@ async def get_chat_context(id: int):
     }) 
 
     if response.status_code != 200:
-        logging.warning("OpenAI message retrieval failed: {}".format(response))
+        logging.warning("OpenAI message retrieval failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI message retrieval failed")
 
     response = response.json()
