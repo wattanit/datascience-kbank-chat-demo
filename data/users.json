@@ -1,35 +1,47 @@
 [
-    {
-      "id": 1,
-      "name": "JohnDoe",
-      "password": "password1",
-      "description": "คนธรรมดา",
-      "customer_segment": "วัยกลางคน",
-      "NPL_status": ""
-    },
-    {
-      "id": 2,
-      "name": "สาริกา ลิ้นวัว",
-      "password": "password2",
-      "description": "คุณนายเจ้าของตลาด",
-      "customer_segment": "วัยเกษียณ",
-      "NPL_status": ""
-    },
-    {
-      "id": 3,
-      "name": "ทาย หนูน้ำ",
-      "password": "password3",
-      "description": "วัยรุ่นสร้างตัว",
-      "customer_segment": "วัยรุ่น",
-      "NPL_status": ""
-    },
-    {
-      "id": 4,
-      "name": "ชีวิตดี เงินทองมายมาย",
-      "password": "password4",
-      "description": "วัยรุ่น ติดหนี้ล้นตัว",
-      "customer_segment": "วัยรุ่น",
-      "NPL_status": "NPL"
-    }
-  ]
-  
+  {
+    "id": 1,
+    "name": "JohnDoe",
+    "password": "password1",
+    "description": "คนธรรมดา",
+    "customer_segment": "วัยกลางคน",
+    "NPL_status": "",
+    "credit_cards": [
+      "The Passion"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "สาริกา ลิ้นวัว",
+    "password": "password2",
+    "description": "คุณนายเจ้าของตลาด",
+    "customer_segment": "วัยเกษียณ",
+    "NPL_status": "",
+    "credit_cards": [
+      "The Wisdom"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "ทาย หนูน้ำ",
+    "password": "password3",
+    "description": "วัยรุ่นสร้างตัว",
+    "customer_segment": "วัยรุ่น",
+    "NPL_status": "",
+    "credit_cards": [
+      "Linepoint",
+      "PLATINUM กสิกรไทย"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "ชีวิตดี เงินทองมายมาย",
+    "password": "password4",
+    "description": "วัยรุ่น ติดหนี้ล้นตัว",
+    "customer_segment": "วัยรุ่น",
+    "NPL_status": "NPL",
+    "credit_cards": [
+      "The Passion"
+    ]
+  }
+]

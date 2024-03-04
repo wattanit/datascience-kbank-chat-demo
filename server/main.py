@@ -14,7 +14,9 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 logging.info("LOADED API KEYS: {}".format(os.getenv("OPENAI_API_KEY")))
-logging.info("UNDERSTANDING AGENT ID: {}".format(os.getenv("OPENAI_UNDERSTANDING_AGENT_ID")))
+logging.info(
+    "UNDERSTANDING AGENT ID: {}".format(os.getenv("OPENAI_UNDERSTANDING_AGENT_ID"))
+)
 logging.info("RESPONSE AGENT ID: {}".format(os.getenv("OPENAI_RESPONSE_AGENT_ID")))
 
 app = FastAPI()
@@ -25,9 +27,11 @@ app.include_router(specialist_router)
 app.include_router(promotion_router)
 app.include_router(nice_talk_router)
 
+
 @app.get("/")
 async def root():
     return {"message": "K-Bank Credit Chat DEMO API"}
+
 
 def start():
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
