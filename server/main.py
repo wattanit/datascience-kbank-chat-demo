@@ -1,14 +1,15 @@
+import os
+import logging
 import uvicorn
 from fastapi import FastAPI
 from dotenv import load_dotenv
-import logging
-import os
 from server.user import router as user_router
 from server.chat.basic import router as chat_router
 from server.chat.context import router as context_router
 from server.chat.specialist import router as specialist_router
 from server.chat.promotion import router as promotion_router
 from server.chat.nice_talk import router as nice_talk_router
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,9 +26,11 @@ app.include_router(specialist_router)
 app.include_router(promotion_router)
 app.include_router(nice_talk_router)
 
+
 @app.get("/")
 async def root():
     return {"message": "K-Bank Credit Chat DEMO API"}
+
 
 def start():
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

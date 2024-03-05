@@ -1,11 +1,13 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+import os
+import time
 import json
+import logging
+import requests
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import os
-import requests
-import logging
 from server.db import CHAT_DB, Chat
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -16,8 +18,10 @@ router = APIRouter()
 class NewChatPayload(BaseModel):
     user_id: int
 
+
 @router.post("/api/chat")
 async def post_chat(body: NewChatPayload):
+    start_time = time.time()
     logging.info("Creating new chat for user: {}".format(body.user_id))
 
     # call OpenAI to create a new thread
@@ -36,7 +40,10 @@ async def post_chat(body: NewChatPayload):
     logging.info("Created OpenAI thread: {}".format(thread_id))
 
     new_chat = Chat(0, body.user_id, thread_id)
-    new_chat.add_assistant_log("new_chat", "New chat created")
+    new_chat.add_assistant_log(
+        "new_chat", 
+        "New chat created", 
+        response_time = time.time() - start_time)
     new_chat = CHAT_DB.add_chat(new_chat)
     logging.info("Created new chat: {}".format(new_chat))
 

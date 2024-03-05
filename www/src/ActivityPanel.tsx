@@ -5,6 +5,7 @@ import { Sheet, Typography } from "@mui/joy";
 function ActivityItem (props: {report: ActivityReport}) {
     let report_type = props.report.type;
     let report_message = props.report.message;
+    let response_time = props.report.response_time;
 
     if (report_type === "context_activity_found") {
         report_message = JSON.parse(report_message);
@@ -25,6 +26,8 @@ function ActivityItem (props: {report: ActivityReport}) {
         }}>
             <b>{report_type}&nbsp;:&nbsp;</b>
             {report_message}
+            <br />
+            time: {response_time.toFixed(2)}
         </Sheet> 
     )
 }
@@ -57,6 +60,7 @@ function ActivityWindow(props: {activityReports: ActivityReport[]}) {
 type ActivityReport = {
     type: string, // should be "system" or "AI"
     message: string,
+    response_time: number
 }
 
 function ActivityPanel (props : {chatId: number}) {

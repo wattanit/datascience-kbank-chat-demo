@@ -1,0 +1,27 @@
+version: '3'
+services:
+  api:
+    image: kbank-search-engine:latest
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    networks:
+      - default
+  db:
+    image: qdrant/qdrant
+    ports:
+      - 6334:6333
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    environment:
+      POSTGRES_PASSWORD: example
+    networks:
+      - default
+
+volumes:
+  qdrant_storage:
+
+networks:
+  default:
+    driver: bridge

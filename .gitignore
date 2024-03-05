@@ -1,8 +1,12 @@
+# Node
 /node_modules
 .DS_Store
+
+# Byte-compiled / optimized / DLL files
 /__pycache__
 */__pycache__/*
 /server/chat/__pycache__
 
+# Environments
 /data
 .env
