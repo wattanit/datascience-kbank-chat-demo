@@ -50,7 +50,7 @@ async def get_chat_promotions(id: int):
     chat.add_assistant_log("promotions_query", "Querying promotions: q={}".format(q))
 
     # query for promotions
-    response = requests.get("http://localhost:8001/api/search", params={"q": q})
+    response = requests.get("http://localhost:8001/api/search", params={"queries": q})
 
     if response.status_code != 200:
         logging.warning(
