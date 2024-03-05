@@ -1,18 +1,19 @@
-from fastapi import APIRouter, HTTPException
+import os
+import time
 import json
+import logging
+import requests
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import os
-import requests
-import logging
 from server.db import CHAT_DB, USER_DB
+
 
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
 router = APIRouter()
-
 
 class NewChatMessagePayload(BaseModel):
     user_id: int
@@ -21,6 +22,7 @@ class NewChatMessagePayload(BaseModel):
 
 @router.post("/api/chat/{id}/message")
 async def create_chat_message(id: int, body: NewChatMessagePayload):
+    start_time = time.time()
     chat = CHAT_DB.get_chat_by_id(id)
     if chat is None:
         logging.warning("Chat not found: id = {}".format(id))
@@ -38,12 +40,15 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
     # save user message
     chat.add_message("user", body.message)
     chat.add_assistant_log(
-        "user_message", "User message added: {}".format(body.message)
+        "user_message", 
+        "User message added: {}".format(body.message),
+        time.time() - start_time
     )
     CHAT_DB.update_chat(chat)
     logging.info("Updated chat: {}".format(chat.id))
 
     # call OpenAI to add the message
+    start_time = time.time()
     data = {
         "role": "user",
         "content": '{} [customer_segment: "{}", credit_cards: "{}"]'.format(
@@ -101,6 +106,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
             "Interpreting of a relevant context. New run created: id={}".format(
                 response["id"]
             ),
+            time.time() - start_time
         )
         CHAT_DB.update_chat(chat)
         logging.info(
@@ -112,6 +118,7 @@ async def create_chat_message(id: int, body: NewChatMessagePayload):
 
 @router.get("/api/chat/{id}/get_context")
 async def get_chat_context(id: int):
+    start_time = time.time()
     chat = CHAT_DB.get_chat_by_id(id)
     if chat is None:
         logging.warning("Chat not found: id = {}".format(id))
@@ -172,9 +179,14 @@ async def get_chat_context(id: int):
     # if run is completed
 
     chat.set_status("ready")
-    chat.add_assistant_log("run_complete", "Run complete: id={}".format(run_id))
+    chat.add_assistant_log(
+        "run_complete", 
+        "Run complete: id={}".format(run_id),
+        time.time() - start_time
+        )
 
     # retrieve the run response from the last message of the thread
+    start_time = time.time()
     logging.info(
         "Calling OpenAI to get messages: chat_id={} thread_id={}".format(
             chat.id, thread_id
@@ -202,7 +214,9 @@ async def get_chat_context(id: int):
     if response_message["role"] != "assistant":
         chat.set_status("ready")
         chat.add_assistant_log(
-            "No response", "No AI response backed from context agent"
+            "No response", 
+            "No AI response backed from context agent",
+            time.time() - start_time
         )
         logging.warning(
             "No AI response backed from context agent: {}".format(response_message)
@@ -220,7 +234,9 @@ async def get_chat_context(id: int):
     if response_content["type"] != "text":
         chat.set_status("error")
         chat.add_assistant_log(
-            "error", "Failed to parse OpenAI response: {}".format(response_content)
+            "error", 
+            "Failed to parse OpenAI response: {}".format(response_content),
+            time.time() - start_time
         )
         logging.warning("Failed to parse OpenAI response: {}".format(response_content))
         CHAT_DB.update_chat(chat)
@@ -240,7 +256,9 @@ async def get_chat_context(id: int):
             # add follow up question to chat
             chat.add_message("assistant", response_body["follow_up_question"])
             chat.add_assistant_log(
-                "follow_up_question", response_body["follow_up_question"]
+                "follow_up_question", 
+                response_body["follow_up_question"],
+                time.time() - start_time
             )
             logging.info(
                 "Follow up question added: {}".format(
@@ -256,7 +274,11 @@ async def get_chat_context(id: int):
             }
         # if assistant found a context
         elif "context" in response_body:
-            chat.add_assistant_log("context_found", response_body["context"])
+            chat.add_assistant_log(
+                "context_found", 
+                response_body["context"],
+                time.time() - start_time
+                )
             chat.chat_context = response_body["context"]
             CHAT_DB.update_chat(chat)
             return {
@@ -267,7 +289,11 @@ async def get_chat_context(id: int):
             }
         else:
             chat.set_status("error")
-            chat.add_assistant_log("error", "AI is confused: {}".format(response_text))
+            chat.add_assistant_log(
+                "error", 
+                "AI is confused: {}".format(response_text),
+                time.time() - start_time
+                )
             logging.warning(
                 "Unexpected chat context response format: {}".format(response_text)
             )
@@ -282,7 +308,9 @@ async def get_chat_context(id: int):
     except:
         chat.set_status("error")
         chat.add_assistant_log(
-            "error", "Failed to parse OpenAI response: {}".format(response_text)
+            "error", 
+            "Failed to parse OpenAI response: {}".format(response_text),
+            time.time() - start_time
         )
         logging.warning("Failed to parse OpenAI response: {}".format(response_text))
         CHAT_DB.update_chat(chat)

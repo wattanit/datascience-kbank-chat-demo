@@ -1,4 +1,5 @@
 import json
+import logging
 
 #### DATABASE SIMULATION ####
 # load user data from data/users.json, simulating a database
@@ -97,16 +98,17 @@ class ChatMessage:
 
 
 class AssistantLog:
-    def __init__(self, chat_type, message):
+    def __init__(self, chat_type, message, response_time):
         self.type = chat_type
         self.message = message
+        self.response_time = response_time
 
     def get_as_dict(self):
-        return {"type": self.type, "message": self.message}
+        return {"type": self.type, "message": self.message, "response_time": self.response_time}
 
     @staticmethod
     def from_dict(data):
-        return AssistantLog(data["type"], data["message"])
+        return AssistantLog(data["type"], data["message"], data["response_time"])
 
 
 class Chat:
@@ -166,8 +168,8 @@ class Chat:
                 return message.message
         return None
 
-    def add_assistant_log(self, chat_type, message) -> None:
-        new_log = AssistantLog(chat_type, message)
+    def add_assistant_log(self, chat_type, message, response_time) -> None:
+        new_log = AssistantLog(chat_type, message, response_time)
         self.assistant_logs.append(new_log)
 
     def add_run_id(self, run_id) -> None:

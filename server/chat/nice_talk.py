@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException
+import os
+import time
 import json
+import logging
+import requests
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import os
-import requests
-import logging
 from server.db import CHAT_DB
 
 logging.basicConfig(level=logging.INFO)
@@ -15,6 +16,7 @@ router = APIRouter()
 
 @router.post("/api/chat/{id}/create_promotions_text")
 async def create_promotions_text(id: int):
+    start_time = time.time()
     chat = CHAT_DB.get_chat_by_id(id)
     if chat is None:
         logging.warning("Chat not found: id = {}".format(id))
@@ -41,10 +43,15 @@ async def create_promotions_text(id: int):
         logging.warning("OpenAI message creation failed: code{}, {}".format(response.status_code, response.json()))
         raise HTTPException(status_code=500, detail="OpenAI message creation failed")
 
-    chat.add_assistant_log("ask_for_promotion_text", "AI is asked to describe the promotion")
+    chat.add_assistant_log(
+        "ask_for_promotion_text", 
+        "AI is asked to describe the promotion",
+        response_time = time.time() - start_time
+        )
     CHAT_DB.update_chat(chat)
 
     # create a new run using Response Agent
+    start_time = time.time()
     data = {
         "assistant_id": os.getenv("OPENAI_RESPONSE_AGENT_ID")
     }
@@ -62,7 +69,11 @@ async def create_promotions_text(id: int):
     response = response.json()
     chat.add_run_id(response["id"])
     chat.set_status("running")
-    chat.add_assistant_log("run_created", "Thinking of a nice response text. New run created: id={}".format(response["id"]))
+    chat.add_assistant_log(
+        "run_created", 
+        "Thinking of a nice response text. New run created: id={}".format(response["id"]),
+        response_time = time.time() - start_time
+        )
     logging.info("Run created with id={}. Updated chat: {}".format(response["id"],chat.id))
     CHAT_DB.update_chat(chat)
 
@@ -74,6 +85,7 @@ async def create_promotions_text(id: int):
 
 @router.get("/api/chat/{id}/get_response")
 async def get_chat_response(id: int):
+    start_time = time.time()
     chat = CHAT_DB.get_chat_by_id(id)
     if chat is None:
         logging.warning("Chat not found: id = {}".format(id))
@@ -125,11 +137,16 @@ async def get_chat_response(id: int):
             "assistant_logs": chat.assistant_logs
         }
 
-    chat.add_assistant_log("run_complete", "Run complete: id={}".format(run_id))
+    chat.add_assistant_log(
+        "run_complete", 
+        "Run complete: id={}".format(run_id),
+        response_time = time.time() - start_time
+        )
     chat.set_status("ready")
     CHAT_DB.update_chat(chat)
 
     # retrieve response messages
+    start_time = time.time()
     response = requests.get(f'https://api.openai.com/v1/threads/{chat.openai_thread_id}/messages', headers={
         'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
         'OpenAI-Beta': 'assistants=v1'
@@ -145,7 +162,11 @@ async def get_chat_response(id: int):
 
     if response_content["type"] != "text":
         chat.set_status("error")
-        chat.add_assistant_log("invalid_response", "Invalid response: {}".format(response_content))
+        chat.add_assistant_log(
+            "invalid_response", 
+            "Invalid response: {}".format(response_content),
+            response_time = time.time() - start_time
+            )
         CHAT_DB.update_chat(chat)
         logging.warning("Invalid response: {}".format(response_content))
         return {
@@ -159,7 +180,11 @@ async def get_chat_response(id: int):
 
     message = response_content["text"]["value"]
     chat.add_message("assistant", message)
-    chat.add_assistant_log("response_message", "Response message added: {}".format(message))
+    chat.add_assistant_log(
+        "response_message", 
+        "Response message added: {}".format(message),
+        response_time = time.time() - start_time
+        )
     chat.set_status("ready")
     CHAT_DB.update_chat(chat)
 

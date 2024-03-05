@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException
+import os
+import time
 import json
+import logging
+import requests
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import os
-import requests
-import logging
 from server.db import CHAT_DB
 
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,7 @@ router = APIRouter()
 
 @router.get("/api/chat/{id}/get_promotions")
 async def get_chat_promotions(id: int):
+    start_time = time.time()
     chat = CHAT_DB.get_chat_by_id(id)
     if chat is None:
         logging.warning("Chat not found: id = {}".format(id))
@@ -47,9 +49,14 @@ async def get_chat_promotions(id: int):
     q = [q1] + q2
 
     logging.info("Querying promotions: q={}".format(q))
-    chat.add_assistant_log("promotions_query", "Querying promotions: q={}".format(q))
+    chat.add_assistant_log(
+        "promotions_query", 
+        "Querying promotions: q={}".format(q),
+        response_time = time.time() - start_time
+        )
 
     # query for promotions
+    start_time = time.time()
     response = requests.get("http://localhost:8001/api/search", params={"queries": q})
 
     if response.status_code != 200:
@@ -66,7 +73,11 @@ async def get_chat_promotions(id: int):
         return {"status": "ready", "action": "promotions not found", "promotions": ""}
 
     logging.info("Promotions found: {}".format(response["result"]))
-    chat.add_assistant_log("promotions_found", json.dumps(response["result"]))
+    chat.add_assistant_log(
+        "promotions_found", 
+        json.dumps(response["result"]),
+        response_time = time.time() - start_time
+        )
     chat.set_last_promotions(response["result"])
     CHAT_DB.update_chat(chat)
     return {
