@@ -10,3 +10,5 @@
 # Environments
 /data
 .env
+
+/qdrant_storage
