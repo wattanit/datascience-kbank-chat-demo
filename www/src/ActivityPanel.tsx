@@ -27,7 +27,9 @@ function ActivityItem (props: {report: ActivityReport}) {
             <b>{report_type}&nbsp;:&nbsp;</b>
             {report_message}
             <br />
-            time: {response_time.toFixed(2)}
+            <Typography sx={{fontSize: "0.8em", fontStyle: "italic"}}>
+                elasped time: {response_time.toFixed(2)}
+            </Typography>
         </Sheet> 
     )
 }
