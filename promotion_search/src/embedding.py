@@ -1,13 +1,14 @@
 import pandas as pd
 from tqdm import tqdm
 from utils.embedder import OpenAIEmbedder
+import os
 
 def embed_data(file_name):
     # Create an instance of the OpenAIEmbedder class
     openai_embedder = OpenAIEmbedder()
 
     # Read the CSV file into a DataFrame
-    df = pd.read_csv(f"data/raw/{file_name}")
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), f"../data/raw/{file_name}"))
 
     # # Combine 'promotion_title' and 'promotion_description' into 'promotion' column
     # df['promotion'] = (
@@ -29,7 +30,8 @@ def embed_data(file_name):
         df['vector_'+column] = df[column].apply(lambda x: openai_embedder.get_embedding(x))
 
     # Save the processed DataFrame to a new CSV file
-    df.to_csv(f"data/processed/{file_name}", index=False)
+    output_path = os.path.join(os.path.dirname(__file__), f"../data/processed/{file_name}")
+    df.to_csv(output_path, index=False)
     print(f"file saved in data/processed/{file_name}")
 
 if __name__ == "__main__":

@@ -35,7 +35,7 @@ Pull the Qdrant Docker image and run it:
 ```bash
 docker pull qdrant/qdrant
 
-docker run -p 6333:6333 -p 6334:6334 \
+docker run --rm -p 6333:6333 -p 6334:6334 \
     -v $(pwd)/qdrant_storage:/qdrant/storage:z \
     qdrant/qdrant
 ```
@@ -44,10 +44,9 @@ docker run -p 6333:6333 -p 6334:6334 \
 
 Navigate to the `promotion_search` directory and run the following commands:
 ```bash
-cd promotion_search
-python src/embedding.py
-python src/uploading.py
-python src/service.py
+poetry run python promotion_search/src/embedding.py
+poetry run python promotion_search/src/uploading.py
+poetry run python promotion_search/src/service.py
 ```
 
 ### 2. Start Backend Server

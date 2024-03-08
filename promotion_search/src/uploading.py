@@ -17,7 +17,8 @@ openai_embedding_dimension = os.environ.get('OPENAI_EMBEDDING_DIMENSION')
 def upload_data_to_qdrant(file_name):
     
     # Read the CSV file into a DataFrame
-    df = pd.read_csv(f"data/processed/{file_name}", dtype=str)
+    input_path = os.path.join(os.path.dirname(__file__), f"../data/processed/{file_name}")
+    df = pd.read_csv(input_path, dtype=str)
     
     # Replacing NaN values by None values
     df = df.where(pd.notnull(df), None)
