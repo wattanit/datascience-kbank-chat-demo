@@ -11,10 +11,10 @@ function Header() {
                 justifyContent: 'space-between',
                 margin: '0 0 0.5rem 0',
                 padding: '0 1rem',
-                backgroundColor: '#01A950',
+                backgroundColor: '#59c8dd',
             }}
             >
-            <h3>K-Chat Credit Assistant</h3>
+            <h3>Credit Card Chat Assistant</h3>
         </Sheet>
     );
 }

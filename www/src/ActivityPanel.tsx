@@ -22,7 +22,7 @@ function ActivityItem (props: {report: ActivityReport}) {
             padding: "1rem",
             marginTop: "1rem",
             borderRadius: "0.5rem",
-            border: "0.1rem solid rgba(1,200,50, 0.5)",
+            border: "0.1rem solid #78C1F3",
         }}>
             <b>{report_type}&nbsp;:&nbsp;</b>
             {report_message}

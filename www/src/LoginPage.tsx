@@ -44,9 +44,9 @@ function LoginUserSelect( props: {
                 margin: '1rem',
                 padding: '1rem',
                 borderRadius: '0.5rem',
-                border: '0.1rem solid rgba(1,200,50, 0.5)',
+                border: '0.1rem solid #78C1F3',
                 ':hover': {
-                    backgroundColor: 'rgba(1,200,50, 0.1)',
+                    backgroundColor: '#E4F1FF',
                 },
                 display: 'flex',
                 flexDirection: 'row',
@@ -56,7 +56,7 @@ function LoginUserSelect( props: {
                     <Typography level="h2" fontSize="xl" sx={{ mb: 0.5 }}>{user.name}</Typography>
                     <div>{user.description}</div>
                 </div>
-                <Button color="success" onClick={() => loginHandler(user)}>เข้าสู่ระบบ</Button>
+                <Button color="primary" onClick={() => loginHandler(user)}>เข้าสู่ระบบ</Button>
             </Sheet>
         )
     });
@@ -105,7 +105,7 @@ function LoginPanel ( props: StateProps) {
         <h2>Login</h2>
         <Button
             onClick={() => setOpenLoginList(true)}
-            color="success"
+            color="primary"
             size="lg">
             โปรดเลือกลูกค้าที่ต้องการเข้าสู่ระบบ
         </Button>

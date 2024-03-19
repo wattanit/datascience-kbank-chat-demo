@@ -20,7 +20,7 @@ function ChatPanelToolbar(props: {newChat: ()=>void,showActivity: boolean, setSh
             }>
                 Show AI Activity ✨
             </Typography>
-            <Button color="success" onClick={()=>{
+            <Button color="primary" onClick={()=>{
                 props.newChat();
             }}>เริ่มต้นคำถามใหม่</Button>
         </Sheet>
@@ -59,7 +59,7 @@ function ChatInputBar (props: {
                 }
                }}
             />
-            <Button color="success" 
+            <Button color="primary" 
                 disabled={(props.chatStatus !== "ready")}
                 onClick={()=>{
                     props.addMessage(newMessage);
@@ -77,7 +77,7 @@ function ChatBoxUser(props: {data: ChatMessage}) {
             border: "1px solid #ddd",
             borderRadius: '15px',
             padding: '10px',
-            backgroundColor: '#E9F6FF',
+            backgroundColor: '#FAF0D7',
             boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
             maxWidth: '70%',
             fontFamily: 'Arial, sans-serif',
@@ -98,7 +98,7 @@ function ChatBoxSystem(props: {data: ChatMessage}) {
             border: "1px solid #ddd",
             borderRadius: '15px',
             padding: '10px',
-            backgroundColor: '#CDFADB',
+            backgroundColor: '#CDF5FD',
             boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
             maxWidth: '70%',
             fontFamily: 'Arial, sans-serif',

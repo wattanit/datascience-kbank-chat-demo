@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "name": "JohnDoe",
+    "name": "พรเพชร สุวรรณวงศ์",
     "password": "password1",
     "description": "คนธรรมดา",
     "customer_segment": "วัยกลางคน",
@@ -12,7 +12,7 @@
   },
   {
     "id": 2,
-    "name": "สาริกา ลิ้นวัว",
+    "name": "ชนาธิป มณีสุวรรณ",
     "password": "password2",
     "description": "คุณนายเจ้าของตลาด",
     "customer_segment": "วัยเกษียณ",
@@ -23,19 +23,18 @@
   },
   {
     "id": 3,
-    "name": "ทาย หนูน้ำ",
+    "name": "ณัฐพงษ์ ใจดี",
     "password": "password3",
     "description": "วัยรุ่นสร้างตัว",
     "customer_segment": "วัยรุ่น",
     "NPL_status": "",
     "credit_cards": [
-      "Kbank Linepoint",
       "Kbank PLATINUM"
     ]
   },
   {
     "id": 4,
-    "name": "ชีวิตดี เงินทองมายมาย",
+    "name": "สุวิทย์ บุญส่ง",
     "password": "password4",
     "description": "วัยรุ่น ติดหนี้ล้นตัว",
     "customer_segment": "วัยรุ่น",
