@@ -14,6 +14,39 @@ load_dotenv()
 
 router = APIRouter()
 
+def further_assistant(chat)->str|None:
+    last_user_message = chat.get_last_user_message()
+    
+    if "s24 ultra" in last_user_message.lower():
+        chat.add_assistant_log(
+            "further assist", 
+            "Checking for special recommendations",
+            response_time = time.time() - time.time()
+        )
+        CHAT_DB.update_chat(chat)
+
+        return """
+Special instruction: If and only if the conversation is about Samsung S24 Ultra mobile phone,  in addition the promotion recommendation, please also suggest where to buy it from the following links:
+Powerbuy : https://www.powerbuy.co.th/th/product/samsung-galaxy-s24-ultra-ram-12gb-256gb-titanium-gray-295650
+Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/samsung-smartphone/samsung-smartphone-galaxy-s24-ultra-12512-titanium-5g-8806095373393_zvje4w
+"""
+    else:
+        return None
+
+    
+
+    chat.add_message("assistant", response)
+    chat.set_status("ready")
+    CHAT_DB.update_chat(chat)
+    return {
+        "status": "ready",
+        "action": "response_added",
+        "context": chat.last_context,
+        "promotions": chat.last_promotions,
+        "message": chat.chat_messages,
+        "assistant_logs": chat.assistant_logs
+    }
+
 @router.post("/api/chat/{id}/create_promotions_text")
 async def create_promotions_text(id: int):
     start_time = time.time()
@@ -23,9 +56,18 @@ async def create_promotions_text(id: int):
         raise HTTPException(status_code=404, detail="Chat not found")
 
     thread_id = chat.openai_thread_id
+    
+    last_user_message = chat.get_last_user_message()
 
     promotions = chat.get_last_promotions()
-    promotion_text = json.dumps(promotions)
+    promotion_text = ""
+    for item in promotions:
+        if last_user_message in item["promotion_description"] or last_user_message in item["promotion_title"]:
+            promotion_text = json.dumps(item)
+
+    if promotion_text == "":
+        promotion_text = json.dumps(promotions)
+    # promotion_text = json.dumps(promotions[0])
 
     logging.info("Adding promotions to OpenAI thread: chat_id={}, thread_id={}".format(chat.id, thread_id))
     data = {
@@ -53,7 +95,8 @@ async def create_promotions_text(id: int):
     # create a new run using Response Agent
     start_time = time.time()
     data = {
-        "assistant_id": os.getenv("OPENAI_RESPONSE_AGENT_ID")
+        "assistant_id": os.getenv("OPENAI_RESPONSE_AGENT_ID"),
+        "additional_instructions": further_assistant(chat)
     }
 
     response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/runs', data=json.dumps(data), headers={
