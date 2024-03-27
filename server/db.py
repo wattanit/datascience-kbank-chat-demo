@@ -287,6 +287,54 @@ class ChatDB:
                         self.save_to_file(self.db_path)
                     return
 
+# load chat sessions from data/chats.json, simulating a database
+CREDIT_CARD_PROMOS_DATA_PATH = "data/credit_cards.json"
+
+class CreditCard:
+    def __init__(self, credit_card_name, promotion):
+        self.credit_card_name = credit_card_name
+        self.promotion = promotion
+        
+    def get_as_dict(self):
+        return {
+            "credit_card_name": self.credit_card_name,
+            "promotion": self.promotion,
+        }
+
+    @staticmethod
+    def from_dict(data):
+        new_credit_card = CreditCard(
+            data["credit_card_name"],
+            data["promotion"],
+        )
+        new_credit_card.credit_card_name = data["credit_card_name"]
+        return new_credit_card
+
+class CreditCardDB:
+    def __init__(self, db_path):
+        self.data: list[CreditCard] = []
+        self.db_path = db_path
+        self.load_from_file(db_path)
+
+    def load_from_file(self, db_path) -> None:
+        with open(db_path, "r") as f:
+            credit_card_json = json.load(f)
+
+            for item in credit_card_json:
+                credit_card = CreditCard.from_dict(item)
+                self.data.append(credit_card)
+                
+    def get_credit_card(self, credit_card_name: str) -> CreditCard | None:
+        for credit_card in self.data:
+            if credit_card.credit_card_name == credit_card_name:
+                return credit_card
+    
+    def get_credit_card_promotion(self, credit_card_name: str) -> str | None:
+        for credit_card in self.data:
+            if credit_card.credit_card_name == credit_card_name:
+                return credit_card.promotion
+
 
 USER_DB = UserDB(USER_DATA_PATH)
 CHAT_DB = ChatDB(CHAT_DATA_PATH)
+CREDIT_CARD_DB = CreditCardDB(CREDIT_CARD_PROMOS_DATA_PATH)
