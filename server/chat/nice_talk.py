@@ -6,7 +6,7 @@ import requests
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from server.db import CHAT_DB
+from server.db import CHAT_DB, USER_DB
 
 logging.basicConfig(level=logging.INFO)
 
@@ -65,10 +65,11 @@ async def create_promotions_text(id: int):
             last_user_message in item["summary_text"]
             or last_user_message in item["promotion_title"]
         ):
-            promotion_text = json.dumps(item)
+            promotion_text = json.dumps(item, ensure_ascii=False)
 
     if promotion_text == "":
-        promotion_text = json.dumps(promotions)
+        promotion_text = json.dumps(promotions, ensure_ascii=False)
+        
     # promotion_text = json.dumps(promotions[0])
     logging.info(
         "Adding promotions to OpenAI thread: chat_id={}, thread_id={}".format(
@@ -258,21 +259,29 @@ async def get_chat_response(id: int):
             "assistant_logs": chat.assistant_logs,
         }
         
+    user_id = chat.user_id
+    user = USER_DB.get_user_by_id(user_id)
+    credit_cards = user.credit_cards
+    
+    if len(credit_cards) == 0:
+        default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้ได้ค่ะ"
+    else:
+        default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้ได้ค่ะ\nแต่บัตร {} ของคุณสามารถใช้โปรโมชั่นแต้ม x2 ในช่วงเวลานี้ได้นะคะ".format(credit_cards[0])
 
     try:
         promotion_choice = str(json.loads(response_content["text"]["value"])["result"])
         logging.info("Promotion choice: {}".format(promotion_choice))
         if promotion_choice:
-            message_string = "Default cerdit card promotion"
+            message_string = default_apologize_phrase
             for _promotion in json.loads(chat.last_promotions):
                 if promotion_choice == str(_promotion["id"]):
                     message_string = _promotion["summary_text"]
                     break
         else:
-            message_string = "Default cerdit card promotion"
+            message_string = default_apologize_phrase
     except:
         logging.warning("Cannot parse response: {}".format(response_content))
-        message_string = "Default cerdit card promotion"
+        message_string = default_apologize_phrase
 
     chat.add_message("assistant", message_string)
 
