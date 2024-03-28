@@ -6,7 +6,7 @@ import requests
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from server.db import CHAT_DB, USER_DB
+from server.db import CHAT_DB, USER_DB, CREDIT_CARD_DB
 
 logging.basicConfig(level=logging.INFO)
 
@@ -262,13 +262,19 @@ async def get_chat_response(id: int):
     user_id = chat.user_id
     user = USER_DB.get_user_by_id(user_id)
     credit_cards = user.credit_cards
-    
-    if len(credit_cards) == 0:
-        default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้ได้ค่ะ"
-    else:
-        default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้ได้ค่ะ\nแต่บัตร {} ของคุณสามารถใช้โปรโมชั่นแต้ม x2 ในช่วงเวลานี้ได้นะคะ".format(credit_cards[0])
 
     try:
+        
+        if len(credit_cards) > 0:
+            credit_card_promotion = CREDIT_CARD_DB.get_credit_card_promotion(credit_cards[0])
+        else:
+            credit_card_promotion = None
+    
+        if credit_card_promotion:
+            default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้\n\nแต่บัตร {} ของคุณสามารถ{}ได้ค่ะ".format(credit_cards[0], credit_card_promotion)
+        else:
+            default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้ได้ค่ะ"
+            
         promotion_choice = str(json.loads(response_content["text"]["value"])["result"])
         logging.info("Promotion choice: {}".format(promotion_choice))
         if promotion_choice:
