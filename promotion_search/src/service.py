@@ -15,13 +15,21 @@ app = FastAPI()
 # Create a neural searcher instance
 searcher = NeuralSearcher(collection_name=COLLECTION_NAME)
 
-vector_columns = ['vector_promotion_title','vector_promotion_description','vector_shop','vector_special_day']
+vector_columns = ['vector_promotion_title','vector_promotion_description','vector_shop','vector_special_day','vector_summary_text']
 
 @app.get("/api/search")
 def search(queries: list[str] = Query(..., description="List of query strings"),
             vector_name: list[str] = Query(vector_columns, description="List of vector name")):
     start_time = time.time()
-    response = {"result" : searcher.get_context_reranked(queries, vector_name, limit=5, threshold=0.0, limit_per_vec=3)}
+    response = {"result" : searcher.get_context_reranked(queries, 
+                                                         vector_name, 
+                                                         limit=5, 
+                                                         threshold=0.0, 
+                                                         limit_per_vec=3,
+                                                         columns=["id", 
+                                                                  "score",
+                                                                  "promotion_title",
+                                                                  "summary_text"])}
     print("Response time is {} sec".format(time.time() - start_time))
     return response
 

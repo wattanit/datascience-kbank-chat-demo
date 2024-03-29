@@ -6,7 +6,7 @@ import requests
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from server.db import CHAT_DB
+from server.db import CHAT_DB, USER_DB, CREDIT_CARD_DB
 
 logging.basicConfig(level=logging.INFO)
 
@@ -14,14 +14,15 @@ load_dotenv()
 
 router = APIRouter()
 
-def further_assistant(chat)->str|None:
+
+def further_assistant(chat) -> str | None:
     last_user_message = chat.get_last_user_message()
-    
+
     if "s24 ultra" in last_user_message.lower():
         chat.add_assistant_log(
-            "further assist", 
+            "further assist",
             "Checking for special recommendations",
-            response_time = time.time() - time.time()
+            response_time=time.time() - time.time(),
         )
         CHAT_DB.update_chat(chat)
 
@@ -33,8 +34,6 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
     else:
         return None
 
-    
-
     chat.add_message("assistant", response)
     chat.set_status("ready")
     CHAT_DB.update_chat(chat)
@@ -44,7 +43,7 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
         "context": chat.last_context,
         "promotions": chat.last_promotions,
         "message": chat.chat_messages,
-        "assistant_logs": chat.assistant_logs
+        "assistant_logs": chat.assistant_logs,
     }
 
 @router.post("/api/chat/{id}/create_promotions_text")
@@ -56,75 +55,100 @@ async def create_promotions_text(id: int):
         raise HTTPException(status_code=404, detail="Chat not found")
 
     thread_id = chat.openai_thread_id
-    
+
     last_user_message = chat.get_last_user_message()
 
     promotions = chat.get_last_promotions()
     promotion_text = ""
     for item in promotions:
-        if last_user_message in item["promotion_description"] or last_user_message in item["promotion_title"]:
-            promotion_text = json.dumps(item)
+        if (
+            last_user_message in item["summary_text"]
+            or last_user_message in item["promotion_title"]
+        ):
+            promotion_text = json.dumps(item, ensure_ascii=False)
 
     if promotion_text == "":
-        promotion_text = json.dumps(promotions)
+        promotion_text = json.dumps(promotions, ensure_ascii=False)
+        
     # promotion_text = json.dumps(promotions[0])
+    logging.info(
+        "Adding promotions to OpenAI thread: chat_id={}, thread_id={}".format(
+            chat.id, thread_id
+        )
+    )
+    data = {"role": "user", "content": last_user_message + "\n" + promotion_text}
 
-    logging.info("Adding promotions to OpenAI thread: chat_id={}, thread_id={}".format(chat.id, thread_id))
-    data = {
-        "role": "user",
-        "content": promotion_text
-    }
-
-    response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/messages', data=json.dumps(data), headers={
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
-        'OpenAI-Beta': 'assistants=v1'
-    })
+    response = requests.post(
+        f"https://api.openai.com/v1/threads/{thread_id}/messages",
+        data=json.dumps(data),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f'Bearer {os.getenv("OPENAI_API_KEY")}',
+            "OpenAI-Beta": "assistants=v1",
+        },
+    )
 
     if response.status_code != 200:
-        logging.warning("OpenAI message creation failed: code{}, {}".format(response.status_code, response.json()))
+        logging.warning(
+            "OpenAI message creation failed: code{}, {}".format(
+                response.status_code, response.json()
+            )
+        )
         raise HTTPException(status_code=500, detail="OpenAI message creation failed")
 
     chat.add_assistant_log(
-        "ask_for_promotion_text", 
+        "ask_for_promotion_text",
         "AI is asked to describe the promotion",
-        response_time = time.time() - start_time
-        )
+        response_time=time.time() - start_time,
+    )
     CHAT_DB.update_chat(chat)
 
     # create a new run using Response Agent
     start_time = time.time()
     data = {
         "assistant_id": os.getenv("OPENAI_RESPONSE_AGENT_ID"),
-        "additional_instructions": further_assistant(chat)
+        "additional_instructions": further_assistant(chat),
     }
 
-    response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/runs', data=json.dumps(data), headers={
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
-        'OpenAI-Beta': 'assistants=v1'
-    })
+    response = requests.post(
+        f"https://api.openai.com/v1/threads/{thread_id}/runs",
+        data=json.dumps(data),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f'Bearer {os.getenv("OPENAI_API_KEY")}',
+            "OpenAI-Beta": "assistants=v1",
+        },
+    )
 
     if response.status_code != 200:
-        logging.warning("OpenAI run creation failed: code{}, {}".format(response.status_code, response.json()))
+        logging.warning(
+            "OpenAI run creation failed: code{}, {}".format(
+                response.status_code, response.json()
+            )
+        )
         raise HTTPException(status_code=500, detail="OpenAI run creation failed")
 
     response = response.json()
     chat.add_run_id(response["id"])
     chat.set_status("running")
     chat.add_assistant_log(
-        "run_created", 
-        "Thinking of a nice response text. New run created: id={}".format(response["id"]),
-        response_time = time.time() - start_time
-        )
-    logging.info("Run created with id={}. Updated chat: {}".format(response["id"],chat.id))
+        "run_created",
+        "Thinking of a nice response text. New run created: id={}".format(
+            response["id"]
+        ),
+        response_time=time.time() - start_time,
+    )
+    logging.info(
+        "Run created with id={}. Updated chat: {}".format(response["id"], chat.id)
+    )
     CHAT_DB.update_chat(chat)
 
     return {
         "status": "running",
         "action": "wait_for_promotion_text",
-        "promotions": promotions
+        "promotions": promotions,
     }
+
 
 @router.get("/api/chat/{id}/get_response")
 async def get_chat_response(id: int):
@@ -141,7 +165,7 @@ async def get_chat_response(id: int):
             "context": chat.last_context,
             "promotions": chat.last_promotions,
             "message": chat.chat_messages,
-            "assistant_logs": chat.assistant_logs
+            "assistant_logs": chat.assistant_logs,
         }
 
     run_id = chat.get_last_run_id()
@@ -156,19 +180,26 @@ async def get_chat_response(id: int):
             "context": chat.last_context,
             "promotions": chat.last_promotions,
             "message": chat.chat_messages,
-            "assistant_logs": chat.assistant_logs
+            "assistant_logs": chat.assistant_logs,
         }
 
     # get running status
-    response = requests.get(f'https://api.openai.com/v1/threads/{chat.openai_thread_id}/runs/{run_id}', headers={
-        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
-        'OpenAI-Beta': 'assistants=v1'
-    })
-    
+    response = requests.get(
+        f"https://api.openai.com/v1/threads/{chat.openai_thread_id}/runs/{run_id}",
+        headers={
+            "Authorization": f'Bearer {os.getenv("OPENAI_API_KEY")}',
+            "OpenAI-Beta": "assistants=v1",
+        },
+    )
+
     if response.status_code != 200:
-        logging.warning("OpenAI run status failed: code{}, {}".format(response.status_code, response.json()))
+        logging.warning(
+            "OpenAI run status failed: code{}, {}".format(
+                response.status_code, response.json()
+            )
+        )
         raise HTTPException(status_code=500, detail="OpenAI run status failed")
-    
+
     response = response.json()
     if response["status"] != "completed":
         return {
@@ -177,26 +208,33 @@ async def get_chat_response(id: int):
             "context": chat.last_context,
             "promotions": chat.last_promotions,
             "message": chat.chat_messages,
-            "assistant_logs": chat.assistant_logs
+            "assistant_logs": chat.assistant_logs,
         }
 
     chat.add_assistant_log(
-        "run_complete", 
+        "run_complete",
         "Run complete: id={}".format(run_id),
-        response_time = time.time() - start_time
-        )
+        response_time=time.time() - start_time,
+    )
     chat.set_status("ready")
     CHAT_DB.update_chat(chat)
 
     # retrieve response messages
     start_time = time.time()
-    response = requests.get(f'https://api.openai.com/v1/threads/{chat.openai_thread_id}/messages', headers={
-        'Authorization': f'Bearer {os.getenv("OPENAI_API_KEY")}',
-        'OpenAI-Beta': 'assistants=v1'
-    })
+    response = requests.get(
+        f"https://api.openai.com/v1/threads/{chat.openai_thread_id}/messages",
+        headers={
+            "Authorization": f'Bearer {os.getenv("OPENAI_API_KEY")}',
+            "OpenAI-Beta": "assistants=v1",
+        },
+    )
 
     if response.status_code != 200:
-        logging.warning("OpenAI message retrieval failed: code{}, {}".format(response.status_code, response.json()))
+        logging.warning(
+            "OpenAI message retrieval failed: code{}, {}".format(
+                response.status_code, response.json()
+            )
+        )
         raise HTTPException(status_code=500, detail="OpenAI message retrieval failed")
 
     response = response.json()
@@ -206,10 +244,10 @@ async def get_chat_response(id: int):
     if response_content["type"] != "text":
         chat.set_status("error")
         chat.add_assistant_log(
-            "invalid_response", 
+            "invalid_response",
             "Invalid response: {}".format(response_content),
-            response_time = time.time() - start_time
-            )
+            response_time=time.time() - start_time,
+        )
         CHAT_DB.update_chat(chat)
         logging.warning("Invalid response: {}".format(response_content))
         return {
@@ -218,16 +256,46 @@ async def get_chat_response(id: int):
             "context": chat.last_context,
             "promotions": chat.last_promotions,
             "message": chat.chat_messages,
-            "assistant_logs": chat.assistant_logs
+            "assistant_logs": chat.assistant_logs,
         }
+        
+    user_id = chat.user_id
+    user = USER_DB.get_user_by_id(user_id)
+    credit_cards = user.credit_cards
 
-    message = response_content["text"]["value"]
-    chat.add_message("assistant", message)
+    try:
+        
+        if len(credit_cards) > 0:
+            credit_card_promotion = CREDIT_CARD_DB.get_credit_card_promotion(credit_cards[0])
+        else:
+            credit_card_promotion = None
+    
+        if credit_card_promotion:
+            default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้\n\nแต่บัตร {} ของคุณสามารถ{}ได้ค่ะ".format(credit_cards[0], credit_card_promotion)
+        else:
+            default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้ได้ค่ะ"
+            
+        promotion_choice = str(json.loads(response_content["text"]["value"])["result"])
+        logging.info("Promotion choice: {}".format(promotion_choice))
+        if promotion_choice:
+            message_string = default_apologize_phrase
+            for _promotion in json.loads(chat.last_promotions):
+                if promotion_choice == str(_promotion["id"]):
+                    message_string = _promotion["summary_text"]
+                    break
+        else:
+            message_string = default_apologize_phrase
+    except:
+        logging.warning("Cannot parse response: {}".format(response_content))
+        message_string = default_apologize_phrase
+
+    chat.add_message("assistant", message_string)
+
     chat.add_assistant_log(
-        "response_message", 
-        "Response message added: {}".format(message),
-        response_time = time.time() - start_time
-        )
+        "response_message",
+        "Response message added: {}".format(message_string),
+        response_time=time.time() - start_time,
+    )
     chat.set_status("ready")
     CHAT_DB.update_chat(chat)
 
@@ -237,5 +305,5 @@ async def get_chat_response(id: int):
         "context": chat.last_context,
         "promotions": chat.last_promotions,
         "message": chat.chat_messages,
-        "assistant_logs": chat.assistant_logs
+        "assistant_logs": chat.assistant_logs,
     }

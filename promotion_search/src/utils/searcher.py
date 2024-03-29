@@ -101,7 +101,16 @@ class NeuralSearcher:
         # Return the aggregated scored_points list
         return scored_points
 
-    def get_context_reranked(self, queries: list[str], embed_columns: list[str], limit: int = 3, threshold: float = 0.5, limit_per_vec: int = 3):
+    def get_context_reranked(self,
+                             queries: list[str],
+                             embed_columns: list[str], 
+                             limit: int = 3, 
+                             threshold: float = 0.5, 
+                             limit_per_vec: int = 3, 
+                             columns: list[str] = ["id", 
+                                                   "score",
+                                                   "promotion_title",
+                                                   "summary_text"]):
         """
         Rerank and select context embeddings based on the queries and embedding columns.
 
@@ -130,7 +139,7 @@ class NeuralSearcher:
         df = df.head(limit)
 
         # Convert the DataFrame to a list of dictionaries
-        result = df.to_dict(orient='records')
+        result = df[columns].to_dict(orient='records')
         return result
 
 # # Example usage

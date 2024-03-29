@@ -11,4 +11,6 @@
 /data
 .env
 
+# Qdrant and Embedded Promotions
 /qdrant_storage
+/promotion_search/data/processed/*

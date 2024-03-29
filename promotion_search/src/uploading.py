@@ -72,5 +72,5 @@ def upload_data_to_qdrant(file_name):
 
 if __name__ == "__main__":
     # var = input("Please enter the file name to upload (it should include '.csv' in the name): ")
-    var = "promotion_special_day.csv"
+    var = "promotions_with_summary.csv"
     upload_data_to_qdrant(var)
