@@ -4,12 +4,16 @@ import uvicorn
 from fastapi import FastAPI, WebSocket
 from dotenv import load_dotenv
 
-from server.user import router as user_router
+from server2.user import router as user_router
+from server2.chat import router as chat_router
+from server2.chat.api import router as chat_api_router
 
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 app.include_router(user_router)
+app.include_router(chat_router)
+app.include_router(chat_api_router)
 
 @app.get("/")
 async def root():

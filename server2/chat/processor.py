@@ -3,10 +3,11 @@ import logging
 import json
 import asyncio
 import requests
+import os
 from fastapi import WebSocket
 from openai import OpenAI
 from dotenv import load_dotenv
-from server2.chat import send_activity, send_chat, send_error, get_elapsed_time
+from server2.chat.utils import send_activity, send_chat, send_error, get_elapsed_time
 from server2.db import CHAT_DB, Chat, USER_DB, CREDIT_CARD_DB
 
 logging.basicConfig(level=logging.INFO)
@@ -15,11 +16,11 @@ load_dotenv()
 
 client = OpenAI()
 
-def add_assistant_log(chat, title, body, response_time, websocket: WebSocket):
+async def add_assistant_log(chat, title, body, response_time, websocket: WebSocket):
     chat.add_assistant_log(title, body, response_time)
     CHAT_DB.update_chat(chat)
     logging.info("Updated chat: {}".format(chat.id))
-    send_activity(websocket, title, body, response_time)
+    await send_activity(websocket, title, body, response_time)
 
 def get_context_agent_id(chat: Chat)->str|None:
     if chat.chat_context == 1 or chat.chat_context == "1":
@@ -31,12 +32,12 @@ def get_context_agent_id(chat: Chat)->str|None:
     else:
         return None
 
-def add_user_message(chat, message, websocket: WebSocket):
+async def add_user_message(chat, message, websocket: WebSocket):
     start_time = time.time()
     
     # save user message
     chat.add_message("user", message)
-    add_assistant_log(chat, 
+    await add_assistant_log(chat, 
         "user_message", 
         f"User message added: {message}", 
         get_elapsed_time(start_time),
@@ -56,7 +57,7 @@ async def wait_run_to_complete(chat):
     )
 
     # wait until run is completed
-    while run["status"] != "completed":
+    while run.status != "completed":
         logging.info(f"Waiting for run to complete: {run_id}")
         await asyncio.sleep(1)
         run = client.beta.threads.runs.retrieve(
@@ -83,9 +84,9 @@ async def get_context(chat, user, websocket: WebSocket):
         content=data_content,
     )
     logging.info(f"Calling OpenAI to add message: {data_content}")
-    add_assistant_log(chat, 
+    await add_assistant_log(chat, 
         "Add message", 
-        "Giving your message to AI to think.", 
+        f"Giving your message to AI to think. Message: {data_content}", 
         get_elapsed_time(start_time), 
         websocket
     )
@@ -100,13 +101,13 @@ async def get_context(chat, user, websocket: WebSocket):
     )
 
     # save run information
-    run_id = run["id"]
-    chat.add_run_id(response["id"])
+    run_id = run.id
+    chat.add_run_id(run_id)
     chat.set_status("running")
     log_title = "run_created"
     log_body = f"Interpreting of a relevant context. New run created: id={run_id}"
     elapsed_time = get_elapsed_time(start_time)
-    add_assistant_log(chat, log_title, log_body, elapsed_time, websocket)
+    await add_assistant_log(chat, log_title, log_body, elapsed_time, websocket)
 
     # wait for run to complete
     run = await wait_run_to_complete(chat)
@@ -114,60 +115,60 @@ async def get_context(chat, user, websocket: WebSocket):
     log_title = "run_completed"
     log_body = f"Interpreting of a relevant context. Run completed: id={run_id}"
     elapsed_time = get_elapsed_time(start_time)
-    add_assistant_log(chat, log_title, log_body, elapsed_time, websocket)
+    await add_assistant_log(chat, log_title, log_body, elapsed_time, websocket)
 
     # retrieve the run response from the last message of the thread
     start_time = time.time()
 
     logging.info(f"Calling OpenAI to get messages: chat_id={chat.id} thread_id={thread_id}")
     thread_messages = client.beta.threads.messages.list(thread_id)
-    response_message = thread_messages["data"][0]
-    if response_message["role"] != "assistant":
+    response_message = thread_messages.data[0]
+    if response_message.role != "assistant":
         logging.warning(f"No AI response backed from context agent: {response_message}")
-        add_assistant_log(chat, "No response", "No AI response backed from context agent", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "No response", chat.chat_context)
+        await add_assistant_log(chat, "No response", "No AI response backed from context agent", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "No response", chat.chat_context)
         return
 
-    response_content = response_message["content"][0]
-    if response_content["type"] != "text":
+    response_content = response_message.content[0]
+    if response_content.type != "text":
         logging.warning(f"Failed to parse OpenAI response: {response_content}")
         chat.set_status("error")
-        add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "AI is confused", chat.chat_context)
+        await add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "AI is confused", chat.chat_context)
         return
 
-    response_text = response_content["text"]
+    response_text = response_content.text
     try:
-        response_body = json.loads(response_text["value"])
+        response_body = json.loads(response_text.value)
 
         # if assistant asks for a follow up question
         if "follow_up_question" in response_body:
             # add follow up question to chat
             follow_up_question = response_body["follow_up_question"]
             chat.add_message("assistant", follow_up_question)
-            add_assistant_log(chat, "follow_up_question", follow_up_question, get_elapsed_time(start_time), websocket)
+            await add_assistant_log(chat, "follow_up_question", follow_up_question, get_elapsed_time(start_time), websocket)
             logging.info(f"Follow up question added: {follow_up_question}")
-            send_chat(websocket, "assistant", follow_up_question, chat.chat_context)
+            await send_chat(websocket, "assistant", follow_up_question, chat.chat_context)
             return
         # if assistant found a context
         elif "context" in response_body:
             context = response_body["context"]
             chat.chat_context = context
-            add_assistant_log(chat, "context_found", context, get_elapsed_time(start_time), websocket)
+            await add_assistant_log(chat, "context_found", context, get_elapsed_time(start_time), websocket)
             logging.info(f"Context found: {context}")
-            send_chat(websocket, "system", "AI ของเราเข้าใจคำถามของคุณแล้ว", chat.chat_context)
+            await send_chat(websocket, "system", "AI ของเราเข้าใจคำถามของคุณแล้ว", chat.chat_context)
             return
         else:
             chat.set_status("error")
             logging.warning(f"Unexpected chat context response format: {response_text}")
-            add_assistant_log(chat, "error", f"AI is confused: {response_text}", get_elapsed_time(start_time), websocket)
-            send_chat(websocket, "system", "AI is confused", chat.chat_context)
+            await add_assistant_log(chat, "error", f"AI is confused: {response_text}", get_elapsed_time(start_time), websocket)
+            await send_chat(websocket, "system", "AI is confused", chat.chat_context)
             return
     except json.JSONDecodeError as e:
         chat.set_status("error")
         logging.warning(f"Failed to parse OpenAI response: {response_text}")
-        add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "AI is confused", chat.chat_context)
+        await add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "AI is confused", chat.chat_context)
         return
 
 async def get_context_details(chat, user, websocket: WebSocket):
@@ -179,7 +180,7 @@ async def get_context_details(chat, user, websocket: WebSocket):
 
     if context_agent_id is None:
         logging.warning("Context agent not found for chat: id = {}".format(chat.id))
-        send_error(websocket, "404", "Context agent not found")
+        await send_error(websocket, "404", "Context agent not found")
         return
 
     # call OpenAI to create a new run to get context details
@@ -189,10 +190,10 @@ async def get_context_details(chat, user, websocket: WebSocket):
     )
 
     # save run information
-    run_id = run["id"]
+    run_id = run.id
     chat.add_run_id(run_id)
     chat.set_status("running")
-    add_assistant_log(chat, 
+    await add_assistant_log(chat, 
         "run_created", 
         f"Interpreting of a relevant context details. New run created: id={run_id}", 
         get_elapsed_time(start_time),
@@ -204,7 +205,7 @@ async def get_context_details(chat, user, websocket: WebSocket):
     start_time = time.time()
     run = await wait_run_to_complete(chat)
     chat.set_status("ready")
-    add_assistant_log(chat, 
+    await add_assistant_log(chat, 
         "run_completed", 
         f"Interpreting of a relevant context details. Run completed: id={run_id}", 
         get_elapsed_time(start_time),
@@ -215,65 +216,65 @@ async def get_context_details(chat, user, websocket: WebSocket):
     start_time = time.time()
     logging.info(f"Calling OpenAI to get messages: chat_id={chat.id} thread_id={thread_id}")
     thread_messages = client.beta.threads.messages.list(thread_id)
-    response_message = thread_messages["data"][0]
-    if response_message["role"] != "assistant":
+    response_message = thread_messages.data[0]
+    if response_message.role != "assistant":
         logging.warning(f"No AI response backed from context agent: {response_message}")
-        add_assistant_log(chat, "No response", "No AI response backed from context agent", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "No response", chat.chat_context, chat.last_context)
+        await add_assistant_log(chat, "No response", "No AI response backed from context agent", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "No response", chat.chat_context, chat.last_context)
         return
 
-    response_content = response_message["content"][0]
-    if response_content["type"] != "text":
+    response_content = response_message.content[0]
+    if response_content.type != "text":
         logging.warning(f"Failed to parse OpenAI response: {response_content}")
         chat.set_status("error")
-        add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "AI is confused", chat.chat_context, chat.last_context)
+        await add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "AI is confused", chat.chat_context, chat.last_context)
         return
 
-    response_text = response_content["text"]
+    response_text = response_content.text
     try:
-        response_body = json.loads(response_text["value"])
+        response_body = json.loads(response_text.value)
 
         # if assistant found context details
         if "follow_up_question" in response_body:
             follow_up_question = response_body["follow_up_question"]
             chat.add_message("assistant", follow_up_question)
-            add_assistant_log(chat, "follow_up_question", follow_up_question, get_elapsed_time(start_time), websocket)
+            await add_assistant_log(chat, "follow_up_question", follow_up_question, get_elapsed_time(start_time), websocket)
             logging.info(f"Follow up question added: {follow_up_question}")
-            send_chat(websocket, "follow_up_question", follow_up_question, chat.chat_context, chat.last_context)
+            await send_chat(websocket, "follow_up_question", follow_up_question, chat.chat_context, chat.last_context)
             return
         # if assistant found context details with "meaning"
         elif "meaning" in response_body:
             meaning = response_body["meaning"]
-            add_assistant_log(chat, "context_details_found", meaning, get_elapsed_time(start_time), websocket)
+            await add_assistant_log(chat, "context_details_found", meaning, get_elapsed_time(start_time), websocket)
             if "top_5_things" in response_body:
                 add_assistant_log(chat, "context_activity_found", json.dumps(response_body["top_5_things"]), get_elapsed_time(start_time), websocket)
 
             logging.info(f"Context details found: chat_id={chat.id} context: {meaning}")
             chat.set_last_context(response_body)
             CHAT_DB.update_chat(chat)
-            send_chat(websocket, "system", f"AI ของเราเข้าใจว่าอย่างนี้\n{meaning}", chat.chat_context, chat.last_context)
+            await send_chat(websocket, "system", f"AI ของเราเข้าใจว่าอย่างนี้\n{meaning}", chat.chat_context, chat.last_context)
             return
         # if assistant found context details with "product_type"
         elif "product_type" in response_body:
             product_type = response_body["product_type"]
-            add_assistant_log(chat, "context_product_type_found", product_type, get_elapsed_time(start_time), websocket)
+            await add_assistant_log(chat, "context_product_type_found", product_type, get_elapsed_time(start_time), websocket)
             logging.info(f"Context product type found: chat_id={chat.id} product_type: {product_type}")
             chat.set_last_context(response_body)
             CHAT_DB.update_chat(chat)
-            send_chat(websocket, "system", f"AI ของเราเข้าใจว่าคุณกำลังหมายถึงสิ่งเหล่านี้\n{product_type}", chat.chat_context, chat.last_context)
+            await send_chat(websocket, "system", f"AI ของเราเข้าใจว่าคุณกำลังหมายถึงสิ่งเหล่านี้\n{product_type}", chat.chat_context, chat.last_context)
         else:
             chat.set_status("error")
             logging.warning(f"Unexpected chat context details response format: {response_text}")
-            add_assistant_log(chat, "error", f"AI is confused: {response_text}", get_elapsed_time(start_time), websocket)
-            send_chat(websocket, "system", "AI is confused", chat.last_context, chat.last_context)
+            await add_assistant_log(chat, "error", f"AI is confused: {response_text}", get_elapsed_time(start_time), websocket)
+            await send_chat(websocket, "system", "AI is confused", chat.last_context, chat.last_context)
             return
 
     except json.JSONDecodeError as e:
         chat.set_status("error")
         logging.warning(f"Failed to parse OpenAI response: {response_text}")
-        add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "AI is confused", chat.last_context, chat.last_context)
+        await add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "AI is confused", chat.last_context, chat.last_context)
         return
 
 async def get_promotions(chat, user, websocket: WebSocket):
@@ -303,7 +304,7 @@ async def get_promotions(chat, user, websocket: WebSocket):
     q = [q1] + q2
 
     logging.info("Querying promotions: q={}".format(q))
-    add_assistant_log(chat, 
+    await add_assistant_log(chat, 
         "promotions_query", 
         f"Querying promotions: q={q}", 
         get_elapsed_time(start_time),
@@ -327,7 +328,7 @@ async def get_promotions(chat, user, websocket: WebSocket):
 
     if len(response["result"]) == 0:
         chat.set_last_promotions([])
-        add_assistant_log(chat, 
+        await add_assistant_log(chat, 
             "promotions_not_found", 
             "Promotions not found", 
             get_elapsed_time(start_time),
@@ -337,7 +338,7 @@ async def get_promotions(chat, user, websocket: WebSocket):
 
     logging.info("Promotions found: {}".format(response["result"]))
     chat.set_last_promotions(response["result"])
-    add_assistant_log(chat,
+    await add_assistant_log(chat,
         "promotions_found",
         json.dumps(response["result"]),
         get_elapsed_time(start_time),
@@ -365,18 +366,6 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
         else:
             return None
 
-    chat.add_message("assistant", response)
-    chat.set_status("ready")
-    CHAT_DB.update_chat(chat)
-    return {
-        "status": "ready",
-        "action": "response_added",
-        "context": chat.last_context,
-        "promotions": chat.last_promotions,
-        "message": chat.chat_messages,
-        "assistant_logs": chat.assistant_logs,
-    }
-
     # provide promotions list to AI
     start_time = time.time()
 
@@ -399,7 +388,7 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
         role="user",
         content=last_user_message + "\n" + promotion_text
     )
-    add_assistant_log(chat,
+    await add_assistant_log(chat,
         "ask_for_promotion_text",
         "AI is asked to choose the best promotion",
         get_elapsed_time(start_time),
@@ -415,10 +404,10 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
     )
 
     # save run information
-    run_id = run["id"]
+    run_id = run.id
     chat.add_run_id(run_id)
     chat.set_status("running")
-    add_assistant_log(chat,
+    await add_assistant_log(chat,
         "run_created",
         f"Choosing the best promotion. New run created: id={run_id}",
         get_elapsed_time(start_time),
@@ -430,7 +419,7 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
     start_time = time.time()
     run = await wait_run_to_complete(chat)
     chat.set_status("ready")
-    add_assistant_log(chat,
+    await add_assistant_log(chat,
         "run_completed",
         f"Choosing the best promotion. Run completed: id={run_id}",
         get_elapsed_time(start_time),
@@ -441,19 +430,19 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
     start_time = time.time()
     logging.info(f"Calling OpenAI to get messages: chat_id={chat.id} thread_id={thread_id}")
     thread_messages = client.beta.threads.messages.list(thread_id)
-    response_message = thread_messages["data"][0]
-    if response_message["role"] != "assistant":
+    response_message = thread_messages.data[0]
+    if response_message.role != "assistant":
         logging.warning(f"No AI response backed from response agent: {response_message}")
-        add_assistant_log(chat, "No response", "No AI response backed from response agent", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "No response", chat.chat_context, chat.last_context)
+        await add_assistant_log(chat, "No response", "No AI response backed from response agent", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "No response", chat.chat_context, chat.last_context)
         return
 
-    response_content = response_message["content"][0]
-    if response_content["type"] != "text":
+    response_content = response_message.content[0]
+    if response_content.type != "text":
         logging.warning(f"Failed to parse OpenAI response: {response_content}")
         chat.set_status("error")
-        add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
-        send_chat(websocket, "system", "AI is confused", chat.chat_context, chat.last_context)
+        await add_assistant_log(chat, "Failed to parse response", "Failed to parse OpenAI response", get_elapsed_time(start_time), websocket)
+        await send_chat(websocket, "system", "AI is confused", chat.chat_context, chat.last_context)
         return
 
     credit_cards = user.credit_cards
@@ -469,7 +458,7 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
         else:
             default_apologize_phrase = "ขอโทษค่ะ เราขออภัยที่ไม่สามารถให้บริการโปรโมชั่นที่คุณต้องการในขณะนี้ได้ค่ะ"
 
-        promotion_choice = str(json.loads(response_content["text"]["value"])["result"])
+        promotion_choice = str(json.loads(response_content.text.value)["result"])
         if promotion_choice:
             message_string = default_apologize_phrase
             for _promotion in json.loads(chat.last_promotions):
@@ -484,20 +473,20 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
 
     chat.add_message("assistant", message_string)
     chat.set_status("ready")
-    add_assistant_log(chat, 
+    await add_assistant_log(chat, 
         "promotion_selected", 
         message_string, 
         get_elapsed_time(start_time), 
         websocket
     )
-    send_chat(websocket, "assistant", message_string, chat.chat_context, chat.last_context)
+    await send_chat(websocket, "assistant", message_string, chat.chat_context, chat.last_context)
     return
 
 async def process_message(data, websocket: WebSocket):
     # validate data object
     if "chat_id" not in data or "user_id" not in data or "message" not in data:
         logging.warning("Invalid message data")
-        send_error(websocket, "400", "Bad request")
+        await send_error(websocket, "400", "Bad request")
         return
 
     # get chat data
@@ -505,7 +494,7 @@ async def process_message(data, websocket: WebSocket):
     chat = CHAT_DB.get_chat_by_id(chat_id)
     if chat is None:
         logging.warning(f"Chat not found: id = {chat_id}")
-        send_error(websocket, "404", "Chat not found")
+        await send_error(websocket, "404", "Chat not found")
         return
 
     # get user data
@@ -513,25 +502,26 @@ async def process_message(data, websocket: WebSocket):
     user = USER_DB.get_user_by_id(user_id)
     if user is None:
         logging.warning(f"User not found: id = {user_id}")
-        send_error(websocket, "404", "User not found")
+        await send_error(websocket, "404", "User not found")
         return
 
     # save user message
-    add_user_message(chat, user, websocket)
+    await add_user_message(chat, data["message"], websocket)
 
     # interpret context
     await get_context(chat, user, websocket)
 
     # compute context details
-    await get_context_details(chat, user, websocket)
+    if chat.chat_context > 0:
+        await get_context_details(chat, user, websocket)
 
-    # search for promotions
-    await get_promotions(chat, user, websocket)
+        # search for promotions
+        await get_promotions(chat, user, websocket)
 
-    # send promotions
-    awaut get_promotions_details(chat, user, websocket)
+        # send promotions
+        await get_promotions_details(chat, user, websocket)
 
-def create_new_chat(data, websocket: WebSocket):
+async def create_new_chat(data, websocket: WebSocket):
     start_time = time.time()
 
     # Validate data object
@@ -543,7 +533,7 @@ def create_new_chat(data, websocket: WebSocket):
 
     # call OpenAI API to create a new Thread
     new_thread = client.beta.threads.create()
-    thread_id = new_thread["id"]
+    thread_id = new_thread.id
     logging.info("Created OpenAI thread: {}".format(thread_id))
 
     # create new Chat in database
@@ -558,4 +548,11 @@ def create_new_chat(data, websocket: WebSocket):
     logging.info("Created new chat: {}".format(new_chat))
 
     # return chat information
+    await websocket.send_json({
+        "type": "new_chat_info",
+        "data": {
+            "chat_id": new_chat.id,
+            "user_id": new_chat.user_id
+        }
+    })
     return new_chat
