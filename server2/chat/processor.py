@@ -410,7 +410,7 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
     start_time = time.time()
     run = client.beta.threads.runs.create(
         thread_id=thread_id,
-        assistant_id=os.getenv("OPENAI_RESPONSE_AGENT_ID"),
+        assistant_id=os.getenv("OPENAI_PROMOTION_SELECTOR_ID"),
         additional_instructions=further_assistant(chat)
     )
 
