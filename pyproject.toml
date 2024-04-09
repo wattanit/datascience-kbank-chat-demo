@@ -17,6 +17,7 @@ numpy = "^1.26.4"
 pandas = "^2.2.0"
 qdrant-client = "^1.7.3"
 openai-whisper = {git = "https://github.com/openai/whisper.git"}
+websockets = "^12.0"
 
 [build-system]
 requires = ["poetry-core"]
