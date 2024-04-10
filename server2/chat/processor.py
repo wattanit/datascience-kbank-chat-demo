@@ -156,7 +156,7 @@ async def get_context(chat, user, websocket: WebSocket):
             chat.chat_context = context
             await add_assistant_log(chat, "context_found", context, get_elapsed_time(start_time), websocket)
             logging.info(f"Context found: {context}")
-            await send_chat(websocket, "system", "AI ของเราเข้าใจคำถามของคุณแล้ว", chat.chat_context)
+            await send_chat(websocket, "system", "AI ของเราเข้าใจคำถามของคุณแล้ว กรุณารอสักครู่", chat.chat_context)
             return
         else:
             chat.set_status("error")
@@ -253,7 +253,20 @@ async def get_context_details(chat, user, websocket: WebSocket):
             logging.info(f"Context details found: chat_id={chat.id} context: {meaning}")
             chat.set_last_context(response_body)
             CHAT_DB.update_chat(chat)
-            await send_chat(websocket, "system", f"AI ของเราเข้าใจว่าอย่างนี้\n{meaning}", chat.chat_context, chat.last_context)
+
+            if chat.chat_context == 2 or chat.chat_context == "2":
+                top_things = response_body["top_5_things"]
+            elif chat.chat_context == 3 or chat.chat_context == "3":
+                top_things = response_body["top_5_things"]
+            else:
+                top_things = []
+
+            meaning_text = f"สำหรับสิ่งที่คุณถามมา เราเข้าใจว่าคุณหมายถึงสิ่งนี้\n\n{meaning}"
+            if len(top_things) > 0:
+                meaning_text+="\n\nเรากำลังหาโปรโมชั่นที่เกี่ยวข้องกับกิจกรรมต่อไปนี้ที่เหมาะสมกับคุณ\n\n"
+                meaning_text+=", ".join(top_things)
+
+            await send_chat(websocket, "system", meaning_text, chat.chat_context, chat.last_context)
             return
         # if assistant found context details with "product_type"
         elif "product_type" in response_body:

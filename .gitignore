@@ -6,6 +6,7 @@
 /__pycache__
 */__pycache__/*
 /server/chat/__pycache__
+/server2/chat/__pycache__
 
 # Environments
 /data
