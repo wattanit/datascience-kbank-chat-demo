@@ -5,6 +5,7 @@ import Button from "@mui/joy/Button";
 import Switch from '@mui/joy/Switch';
 import Typography from '@mui/joy/Typography';
 import Markdown from 'react-markdown'
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { StateProps } from "./App";
 
 function ChatPanelToolbar(props: {newChat: ()=>void,showActivity: boolean, setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
@@ -136,10 +137,16 @@ function ChatBoxInfo(props: {data: ChatMessage}) {
     )
 }
 
-type ChatMessage = {
+export type ChatMessage = {
     type: string,
     message: string,
 }
+
+type WebSocketMessage = {
+    type: string,
+    data: any,
+}
+
 
 function ChatWindow(props: {messages: ChatMessage[]}) {
 
@@ -169,253 +176,94 @@ function ChatWindow(props: {messages: ChatMessage[]}) {
     )
 }
 
-function ChatPanel (props: StateProps & {
+export function ChatPanel (props: StateProps & {
     chatId: number,
     setChatId: React.Dispatch<React.SetStateAction<number>>,
     showActivity: boolean, 
-    setShowActivity: React.Dispatch<React.SetStateAction<boolean>>
+    setShowActivity: React.Dispatch<React.SetStateAction<boolean>>,
+    messages: ChatMessage[],
+    setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
+    socketUrl: string,
 }) {
-    let [messages, setMessages] = useState<ChatMessage[]>([]);
-    let [chatTick, setChatTick] = useState<number>(0); // to force re-render
-    
+    let { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket<WebSocketMessage>(props.socketUrl, {
+        onOpen: ()=> {console.log("ChatPanel: WebSocket connected")},
+        onClose: ()=> {console.log("ChatPanel: WebSocket disconnected")},
+        share: true,
+    });
+
     // chatStatus controls the main event loop and should be one of the following:
-    // init, ask_context, ask_promotion, ask_response, ready
+    // init, running, ready
     let [chatStatus, setChatStatus] = useState<string>("init"); 
     
-    // event loop monitoring
-    let monitor = ()=>{
-        if (chatStatus === "ask_context") {
-            getContext();
-        } else if (chatStatus == "ask_context_details") {
-            getContextDetails();
-        } else if (chatStatus === "ask_promotion") {
-            getPromotion();
-        } else if (chatStatus === "ask_response") {
-            getResponse();
-        }
-    }
-
-    // new chat event handler. This function will create a new chat thread and set chatStatus to "ready"
+    // new chat event handler.
     let newChat = ()=>{
         let userName = props.state.currentUser?.name;
         let welcomeMessage = (userName)?{type: "assistant", message: "สวัสดีค่ะ คุณ"+userName+" สนใจหาโปรโมชั่นสำหรับโอกาสไหนคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
-        setMessages([welcomeMessage]);
+        props.setMessages([welcomeMessage]);
 
         // create new thread
-        fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({user_id: props.state.currentUser?.id})
-        })
-        .then(response => {return response.json()})
-        .then(data => {
-            props.setChatId(data.id);
+        let request = {
+            action: "create_new_chat",
+            data: {
+                user_id: props.state.currentUser?.id
+            }
+        }
 
-            setChatStatus("ready");
-        })
+        sendJsonMessage(request);
     }
 
-    // add message event handler. This function will add a new message to the chat thread and set chatStatus to "ask_context"
+    // add message event handler. This function will add a new message to the chat thread and set chatStatus to "running"
     let addMessage = (newMessage: string) => {
-        let oldMessages = messages;
+        let oldMessages = props.messages;
         let newMessages = [...oldMessages, {type: "user", message: newMessage}];
-        setMessages(newMessages);
+        props.setMessages(newMessages);
 
         // send message to server
-        fetch(`/api/chat/${props.chatId}/message`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        let request = {
+            action: "new_user_message",
+            data: {
+                chat_id: props.chatId,
                 user_id: props.state.currentUser?.id,
                 message: newMessage
-            })
-        })
-        .then(response => {return response.json()})
-        .then(data => {
-            setChatStatus("ask_context");
-        })
-    }
-
-    // event loop for checking context from server
-    let getContext = ()=>{
-        if (chatStatus !== "ask_context") {
-            return;
-        }
-        console.log("get context");
-
-        fetch(`/api/chat/${props.chatId}/get_context`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => {return response.json()})
-        .then(data => {
-            console.log(data);
-            if (data.action === "context_found") {
-                // trigger server to generate context detais
-                fetch(`/api/chat/${props.chatId}/create_context_details`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                })
-                .then(response => {return response.json()})
-                .then(data => {
-                    setChatStatus("ask_context_details");
-                });
-
-            }else if (data.action === "follow_up_question") {
-                setChatStatus("ready");
-                let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "assistant", message: data.message}];
-                setMessages(newMessages);
-            }else if (data.status === "running") {
-                // do nothing
-            }else{
-                // setChatStatus("ready");
-                // let oldMessages = messages;
-                // let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ไม่เข้าใจคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
-                // setMessages(newMessages);
             }
-        })
-    }
-
-    let getContextDetails = ()=>{
-        if (chatStatus !== "ask_context_details") {
-            return;
         }
-
-        console.log("get context details");
-
-        fetch(`/api/chat/${props.chatId}/get_context_details`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => {return response.json()})
-        .then(data => {
-            console.log(data);
-            if (data.action === "context_details_found") {
-                setChatStatus("ask_promotion");
-            }else if (data.action === "follow_up_question") {
-                setChatStatus("ready");
-                let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "assistant", message: data.message}];
-                setMessages(newMessages);
-            }else if (data.status === "running") {
-                // do nothing
-            }else{
-                // setChatStatus("ready");
-                // let oldMessages = messages;
-                // let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ไม่พบข้อมูลที่ต้องการ คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
-                // setMessages(newMessages);
-            }
-        })
-    }
-
-    // event loop for checking promotion from server
-    let getPromotion = ()=>{
-        if (chatStatus !== "ask_promotion") {
-            return;
-        }
-        setChatStatus("ready");
-        console.log("get promotion");
-
-        fetch(`/api/chat/${props.chatId}/get_promotions`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => {return response.json()})
-        .then(data => {
-            console.log(data);
-            if (data.action === "promotions found") {
-                let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "system", message: "กำลังคัดเลือกโปรโมชั่นที่เหมาะสมที่สุดสำหรับคุณ"}];
-                setMessages(newMessages);
-
-                // trigger server to generate response text
-                fetch(`/api/chat/${props.chatId}/create_promotions_text`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                })
-                .then(response => {return response.json()})
-                .then(data => {
-                    if (data.action === "wait_for_promotion_text") {
-                        setChatStatus("ask_response");
-                }});
-            }else{
-                let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ไม่พบโปรโมชั่นที่ตรงกับคำถาม คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
-                setMessages(newMessages);
-                setChatStatus("ready");
-            }
-        })
-    }
-
-    // event loop for checking response from server
-    let getResponse = ()=>{
-        if (chatStatus !== "ask_response") {
-            return;
-        }
-        console.log("get response");
-
-        fetch(`/api/chat/${props.chatId}/get_response`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => {return response.json()})
-        .then(data => {
-            console.log(data);
-            if (data.status === "ready") {
-                setChatStatus("ready");
-
-                // get last message with type "assistant" and add new message
-                let bot_messages = data.message.filter((message: ChatMessage)=>message.type === "assistant");
-                let latest_bot_message = bot_messages[bot_messages.length-1];
-                console.log(latest_bot_message);
-
-                let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "assistant", message: latest_bot_message.message}];
-                setMessages(newMessages);
-
-            }else if (data.status === "running") {
-                // do nothing
-            }else{
-                setChatStatus("ready");
-                let oldMessages = messages;
-                let newMessages = [...oldMessages, {type: "assistant", message: "ขอโทษค่ะ ตอนนี้ระบบไม่สามารถให้ข้อมูลได้ คุณสามารถลองถามใหม่อีกครั้งได้ค่ะ"}];
-                setMessages(newMessages);
-            }
-        })
+        sendJsonMessage(request);
+        setChatStatus("running");
     }
 
     useEffect(()=>{
-        if (chatStatus === "init"){
-            newChat();
-        }
         console.log("chat status: "+chatStatus);
-
-        monitor();
-        setTimeout(()=>{
-            if (chatTick < 1000000) {
-                setChatTick(chatTick+1);
-            }else{
-                setChatTick(0);
+        if (chatStatus === "init"){
+            if (readyState === ReadyState.OPEN) {
+                newChat();
             }
-        }, 1000);
-    }, [chatTick]);
+        }
+
+        if (lastJsonMessage !== null && readyState === ReadyState.OPEN){
+            if (lastJsonMessage.type === "new_chat_info") {
+                let chatId = lastJsonMessage.data.chat_id;
+                props.setChatId(chatId);
+
+                setChatStatus("ready");
+            }     
+            else if (lastJsonMessage.type === "chat") {
+                let message_type = lastJsonMessage.data.message_type;
+                let message = lastJsonMessage.data.message;
+
+                if (message_type === "system"){
+                    let oldMessages = props.messages;
+                    let newMessages = [...oldMessages, {type: "system", message: message}];
+                    props.setMessages(newMessages);
+                    setChatStatus("running");
+                }else if(message_type === "assistant"){
+                    let oldMessages = props.messages;
+                    let newMessages = [...oldMessages, {type: "assistant", message: message}];
+                    props.setMessages(newMessages);
+                    setChatStatus("ready");
+                }
+            }
+        }
+    }, [readyState, lastJsonMessage]);
     
     return (
         <Grid xs={12} md={(props.showActivity)?8:12} sx={{
@@ -423,7 +271,7 @@ function ChatPanel (props: StateProps & {
             paddingRight: "1rem",
         }}>
             <ChatPanelToolbar newChat={newChat} showActivity={props.showActivity} setShowActivity={props.setShowActivity} />
-            <ChatWindow messages={messages}/>
+            <ChatWindow messages={props.messages}/>
             {(chatStatus !== "ready")?<div>ระบบกำลังทำงานอยู่ กรุณารอสักครู่ ✨</div>:null}
             <ChatInputBar addMessage={addMessage} chatStatus={chatStatus}/>
         </Grid>
