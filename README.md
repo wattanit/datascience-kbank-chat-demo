@@ -59,13 +59,13 @@ OPENAI_CONTEXT_AGENT_ID=your-agent-id
 OPENAI_SPECIALIST_PRODUCT_AGENT_ID=your-agent-id
 OPENAI_SPECIALIST_OCCASION_AGENT_ID=your-agent-id
 OPENAI_SPECIALIST_PLACE_AGENT_ID=your-agent-id
-OPENAI_RESPONSE_AGENT_ID=your-agent-id
+OPENAI_PROMOTION_SELECTOR_ID=your-agent-id
 OPENAI_API_KEY=your-api-key
 ```
 
 **Start Server**
 ```bsah
-poetry run uvicorn server.main:app --reload --port 8000
+poetry run uvicorn server2.main:app --reload --port 8000
 ```
 
 ### 3. Start Frontend Server
