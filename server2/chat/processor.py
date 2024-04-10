@@ -5,9 +5,10 @@ import asyncio
 import requests
 import os
 from fastapi import WebSocket
-from openai import OpenAI
+from openai import AssistantEventHandler, OpenAI
 from dotenv import load_dotenv
-from server2.chat.utils import send_activity, send_chat, send_error, get_elapsed_time
+from typing_extensions import override
+from server2.chat.utils import send_activity, send_chat, send_error, get_elapsed_time, send_chat_delta
 from server2.db import CHAT_DB, Chat, USER_DB, CREDIT_CARD_DB
 
 logging.basicConfig(level=logging.INFO)
@@ -184,33 +185,31 @@ async def get_context_details(chat, user, websocket: WebSocket):
         return
 
     # call OpenAI to create a new run to get context details
-    run = client.beta.threads.runs.create(
+    # create a run and start to stream the run's response
+    with client.beta.threads.runs.stream(
         thread_id=thread_id,
-        assistant_id=context_agent_id
-    )
+        assistant_id=context_agent_id,
+    ) as stream:
+        chat.set_status("running")
+        await add_assistant_log(chat,
+            "context_details_query",
+            "Querying context details",
+            get_elapsed_time(start_time),
+            websocket
+        )
+        logging.info(f"Calling OpenAI to get context details: chat_id={chat.id} thread_id={thread_id}")
+
+        for text in stream.text_deltas:
+            logging.info(f"Run Streaming: Received text: {text}")
+            await send_chat_delta(websocket, "system", text, False)
+
+        await send_chat_delta(websocket, "system", "", True)
 
     # save run information
+    run = client.beta.threads.runs.list(thread_id, limit=1).data[0]
     run_id = run.id
     chat.add_run_id(run_id)
-    chat.set_status("running")
-    await add_assistant_log(chat, 
-        "run_created", 
-        f"Interpreting of a relevant context details. New run created: id={run_id}", 
-        get_elapsed_time(start_time),
-        websocket
-    )
-    logging.info(f"New run created: id={run_id}. Updating chat: {chat.id}")
-
-    # wait for run to complete
-    start_time = time.time()
-    run = await wait_run_to_complete(chat)
-    chat.set_status("ready")
-    await add_assistant_log(chat, 
-        "run_completed", 
-        f"Interpreting of a relevant context details. Run completed: id={run_id}", 
-        get_elapsed_time(start_time),
-        websocket
-    )
+    CHAT_DB.update_chat(chat)
 
     # retrieve the run response from the last message of the thread
     start_time = time.time()

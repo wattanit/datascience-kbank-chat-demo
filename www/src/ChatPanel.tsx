@@ -140,6 +140,7 @@ function ChatBoxInfo(props: {data: ChatMessage}) {
 export type ChatMessage = {
     type: string,
     message: string,
+    streaming: boolean,
 }
 
 type WebSocketMessage = {
@@ -198,7 +199,7 @@ export function ChatPanel (props: StateProps & {
     // new chat event handler.
     let newChat = ()=>{
         let userName = props.state.currentUser?.name;
-        let welcomeMessage = (userName)?{type: "assistant", message: "สวัสดีค่ะ คุณ"+userName+" สนใจหาโปรโมชั่นสำหรับโอกาสไหนคะ"}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ"};
+        let welcomeMessage = (userName)?{type: "assistant", message: "สวัสดีค่ะ คุณ"+userName+" สนใจหาโปรโมชั่นสำหรับโอกาสไหนคะ", streaming: false}:{type: "system", message: "สวัสดีค่ะ มีอะไรให้ช่วยคะ", streaming: false};
         props.setMessages([welcomeMessage]);
 
         // create new thread
@@ -215,7 +216,7 @@ export function ChatPanel (props: StateProps & {
     // add message event handler. This function will add a new message to the chat thread and set chatStatus to "running"
     let addMessage = (newMessage: string) => {
         let oldMessages = props.messages;
-        let newMessages = [...oldMessages, {type: "user", message: newMessage}];
+        let newMessages = [...oldMessages, {type: "user", message: newMessage, streaming: false}];
         props.setMessages(newMessages);
 
         // send message to server
@@ -252,15 +253,47 @@ export function ChatPanel (props: StateProps & {
 
                 if (message_type === "system"){
                     let oldMessages = props.messages;
-                    let newMessages = [...oldMessages, {type: "system", message: message}];
+                    let newMessages = [...oldMessages, {type: "system", message: message, streaming: false}];
                     props.setMessages(newMessages);
                     setChatStatus("running");
                 }else if(message_type === "assistant"){
                     let oldMessages = props.messages;
-                    let newMessages = [...oldMessages, {type: "assistant", message: message}];
+                    let newMessages = [...oldMessages, {type: "assistant", message: message, streaming: false}];
                     props.setMessages(newMessages);
                     setChatStatus("ready");
                 }
+            }
+            else if (lastJsonMessage.type === "chat_delta") {
+                let message_type = lastJsonMessage.data.message_type;
+                let message = lastJsonMessage.data.message;
+
+                // keep only english and thai characters in the message
+                message = message.replace(/[^a-zA-Z0-9ก-๙ ]/g, '');
+                
+                if (props.messages.length > 0 ){
+                    let oldMessages = props.messages;
+
+                    let last_message = oldMessages[oldMessages.length-1];
+                    if (last_message.streaming){
+                        if (lastJsonMessage.data.is_completed){
+                            // streaming is completed, remove the last streamed message
+                            let newMessages = [...oldMessages.slice(0, -1)];
+                            props.setMessages(newMessages);
+                        }else{
+                            // streaming is not completed, append the message to the last streamed message
+                            let newMessage = {type: message_type, message: last_message.message + message, streaming: true};
+                            let newMessages = [...oldMessages.slice(0, -1), newMessage];
+                            props.setMessages(newMessages);
+                        }
+                    }else{
+                        // create a new streamed message
+                        let newMessage = {type: message_type, message: message, streaming: true};
+                        let newMessages = [...oldMessages, newMessage];
+                        props.setMessages(newMessages);
+                    }
+                }
+
+                setChatStatus("running");
             }
         }
     }, [readyState, lastJsonMessage]);

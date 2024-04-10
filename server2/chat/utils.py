@@ -29,6 +29,17 @@ async def send_chat(websocket: WebSocket, message_type: str, message: str, conte
             }
         })
 
+async def send_chat_delta(websocket: WebSocket, message_type: str, message: str, is_completed: bool):
+    await websocket.send_json({
+            "type": "chat_delta",
+            "data": {
+                "message_id": "",
+                "message": message,
+                "message_type": message_type,
+                "is_completed": is_completed
+            }
+        })
+
 async def send_error(websocket: WebSocket, error_code: str, error_message: str):
     await websocket.send_json({
             "type": "error",

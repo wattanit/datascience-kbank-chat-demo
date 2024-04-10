@@ -18,7 +18,7 @@ router = APIRouter()
 #         user_id: number
 
 # websocket response message schema:
-# type: ["chat", "activity", "error"]
+# type: ["chat", "activity", "error", "new_chat_info", "chat_delta"]
 # data:
 #     type.chat:
 #         message_id: str
@@ -34,6 +34,14 @@ router = APIRouter()
 #     type.error:
 #         error_code: str
 #         error_message: str
+#     type.new_chat_info:
+#         chat_id: number
+#         user_id: number
+#     type.chat_delta:
+#         message_id: str
+#         message: str
+#         message_type: ["user", "assistant", "system"]
+#         is_completed: bool
 
 @router.websocket("/api/chat-socket")
 async def websocket_endpoint(websocket: WebSocket):
