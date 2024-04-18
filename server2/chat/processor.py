@@ -494,6 +494,30 @@ Banana IT: https://www.bnn.in.th/th/p/smartphone-and-accessories/smartphone/sams
     await send_chat(websocket, "assistant", message_string, chat.chat_context, chat.last_context)
     return
 
+async def get_token_report(chat, websocket: WebSocket):
+    start_time = time.time()
+    run_list = chat.openai_run_id
+
+    prompt_tokens_total = 0
+    completion_tokens = 0
+
+    for run_id in run_list:
+        logging.info(f"Calling OpenAI to get run tokens: chat_id={chat.id} run_id={run_id}")
+        run = client.beta.threads.runs.retrieve(
+            thread_id=chat.openai_thread_id,
+            run_id=run_id
+        )
+
+        prompt_tokens_total += run.usage.prompt_tokens
+        completion_tokens += run.usage.completion_tokens
+
+    await add_assistant_log(chat,
+        "Final Report: TOKEN",
+        f"Prompt Tokens: {prompt_tokens_total}\n, Completion Tokens: {completion_tokens},\nTotal Tokens: {prompt_tokens_total + completion_tokens}",
+        get_elapsed_time(start_time),
+        websocket
+    )
+
 async def process_message(data, websocket: WebSocket):
     # validate data object
     if "chat_id" not in data or "user_id" not in data or "message" not in data:
@@ -545,6 +569,8 @@ async def process_message(data, websocket: WebSocket):
             f"{time_log.total_time:.4f}",
             websocket
         )
+
+        await get_token_report(chat, websocket)
 
 async def create_new_chat(data, websocket: WebSocket):
     start_time = time.time()
