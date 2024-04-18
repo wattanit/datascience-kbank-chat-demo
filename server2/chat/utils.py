@@ -48,3 +48,30 @@ async def send_error(websocket: WebSocket, error_code: str, error_message: str):
                 "error_message": error_message
             }
         })
+
+class TimeLog:
+    def __init__(self):
+        self.start_datetime = time.time()
+        self.last_log_time = self.start_datetime
+        self.context_time = 0
+        self.context_details_time = 0
+        self.promotion_time = 0
+        self.promotion_details_time = 0
+        self.total_time = 0
+
+    def log_time(self, state: str):
+        current_time = time.time()
+        elapsed_time = current_time - self.last_log_time
+        if state == "context":
+            self.context_time = elapsed_time
+        elif state == "context_details":
+            self.context_details_time = elapsed_time
+        elif state == "promotion":
+            self.promotion_time = elapsed_time
+        elif state == "promotion_details":
+            self.promotion_details_time = elapsed_time
+        self.last_log_time = current_time
+        
+        self.total_time = time.time() - self.start_datetime
+
+    

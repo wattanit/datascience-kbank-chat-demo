@@ -47,7 +47,7 @@ function ActivityWindow(props: {activityReports: ActivityReport[]}) {
             justifyContent: "flex-start",
             overflowY: "auto",
             alignItems: "flex-end",
-            maxHeight: "80vh",
+            maxHeight: "70vh",
             width: "100%",
         }}>
             {renderActivityItems}

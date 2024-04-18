@@ -8,7 +8,7 @@ from fastapi import WebSocket
 from openai import AssistantEventHandler, OpenAI
 from dotenv import load_dotenv
 from typing_extensions import override
-from server2.chat.utils import send_activity, send_chat, send_error, get_elapsed_time, send_chat_delta
+from server2.chat.utils import send_activity, send_chat, send_error, get_elapsed_time, send_chat_delta, TimeLog
 from server2.db import CHAT_DB, Chat, USER_DB, CREDIT_CARD_DB
 
 logging.basicConfig(level=logging.INFO)
@@ -520,18 +520,31 @@ async def process_message(data, websocket: WebSocket):
     # save user message
     await add_user_message(chat, data["message"], websocket)
 
+    time_log = TimeLog()
+
     # interpret context
     await get_context(chat, user, websocket)
+    time_log.log_time("context")
 
     # compute context details
     if chat.chat_context > 0:
         await get_context_details(chat, user, websocket)
+        time_log.log_time("context_details")
 
         # search for promotions
         await get_promotions(chat, user, websocket)
+        time_log.log_time("promotion")
 
         # send promotions
         await get_promotions_details(chat, user, websocket)
+        time_log.log_time("promotion_details")
+
+        await add_assistant_log(chat,
+            "Final Report: TIME",
+            f"Total time: {time_log.total_time:.2f}s\nContext: {time_log.context_time:.2f}s\nContext Details: {time_log.context_details_time:.2f}s\nPromotion: {time_log.promotion_time:.2f}s\nPromotion Details: {time_log.promotion_details_time:.2f}s",
+            f"{time_log.total_time:.4f}",
+            websocket
+        )
 
 async def create_new_chat(data, websocket: WebSocket):
     start_time = time.time()
