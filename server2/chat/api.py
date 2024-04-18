@@ -12,7 +12,10 @@ load_dotenv()
 
 router = APIRouter()
 
-client = OpenAI()
+client = OpenAI(
+  organization=os.getenv("OPENAI_ORGANIZATION"),
+  project=os.getenv("OPENAI_PROJECT"),
+)
 
 @router.get("/api/chat/{id}")
 async def get_chat(id: int):

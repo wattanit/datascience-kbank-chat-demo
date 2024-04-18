@@ -15,7 +15,10 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
-client = OpenAI()
+client = OpenAI(
+  organization=os.getenv("OPENAI_ORGANIZATION"),
+  project=os.getenv("OPENAI_PROJECT"),
+)
 
 async def add_assistant_log(chat, title, body, response_time, websocket: WebSocket):
     chat.add_assistant_log(title, body, response_time)
@@ -242,21 +245,18 @@ async def get_context_details(chat, user, websocket: WebSocket):
             logging.info(f"Follow up question added: {follow_up_question}")
             await send_chat(websocket, "follow_up_question", follow_up_question, chat.chat_context, chat.last_context)
             return
-        # if assistant found context details with "meaning"
-        elif "meaning" in response_body:
-            meaning = response_body["meaning"]
-            await add_assistant_log(chat, "context_details_found", meaning, get_elapsed_time(start_time), websocket)
-            if "top_5_things" in response_body:
-                add_assistant_log(chat, "context_activity_found", json.dumps(response_body["top_5_things"]), get_elapsed_time(start_time), websocket)
+        # if assistant found context details with "top_3_things"
+        elif "top_3_things" in response_body:
+            add_assistant_log(chat, "context_activity_found", json.dumps(response_body["top_3_things"]), get_elapsed_time(start_time), websocket)
 
-            logging.info(f"Context details found: chat_id={chat.id} context: {meaning}")
+            logging.info(f"Context details found: chat_id={chat.id}")
             chat.set_last_context(response_body)
             CHAT_DB.update_chat(chat)
 
             if chat.chat_context == 2 or chat.chat_context == "2":
-                top_things = response_body["top_5_things"]
+                top_things = response_body["top_3_things"]
             elif chat.chat_context == 3 or chat.chat_context == "3":
-                top_things = response_body["top_5_things"]
+                top_things = response_body["top_3_things"]
             else:
                 top_things = []
 
@@ -305,9 +305,9 @@ async def get_promotions(chat, user, websocket: WebSocket):
         if chat.chat_context == 1 or chat.chat_context == "1":
             return last_context["product_type"]
         elif chat.chat_context == 2 or chat.chat_context == "2":
-            return last_context["top_5_things"]
+            return last_context["top_3_things"]
         elif chat.chat_context == 3 or chat.chat_context == "3":
-            return last_context["top_5_things"]
+            return last_context["top_3_things"]
         else:
             return []
 

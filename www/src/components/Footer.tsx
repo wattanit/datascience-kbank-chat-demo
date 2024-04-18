@@ -11,7 +11,7 @@ function Footer () {
             width: '100%',        
         }}>
             <p>© 2024 TN Digital Solutions</p>
-            &nbsp;(v0.3)
+            &nbsp;(v0.4)
         </Sheet>
     )
 }
