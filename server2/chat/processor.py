@@ -260,7 +260,7 @@ async def get_context_details(chat, user, websocket: WebSocket):
             else:
                 top_things = []
 
-            meaning_text = f"สำหรับสิ่งที่คุณถามมา เราเข้าใจว่าคุณหมายถึงสิ่งนี้\n\n{meaning}"
+            meaning_text = "กำลังค้นหาโปรโมชั่นที่เหมาะสมสำหรับคุณ"
             if len(top_things) > 0:
                 meaning_text+="\n\nเรากำลังหาโปรโมชั่นที่เกี่ยวข้องกับกิจกรรมต่อไปนี้ที่เหมาะสมกับคุณ\n\n"
                 meaning_text+=", ".join(top_things)
@@ -274,7 +274,7 @@ async def get_context_details(chat, user, websocket: WebSocket):
             logging.info(f"Context product type found: chat_id={chat.id} product_type: {product_type}")
             chat.set_last_context(response_body)
             CHAT_DB.update_chat(chat)
-            await send_chat(websocket, "system", f"AI ของเราเข้าใจว่าคุณกำลังหมายถึงสิ่งเหล่านี้\n{product_type}", chat.chat_context, chat.last_context)
+            await send_chat(websocket, "system", "กำลังค้นหาโปรโมชั่นที่เหมาะสมสำหรับคุณ", chat.chat_context, chat.last_context)
         else:
             chat.set_status("error")
             logging.warning(f"Unexpected chat context details response format: {response_text}")

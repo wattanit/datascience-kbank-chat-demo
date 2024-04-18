@@ -1,12 +1,15 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, JSXElementConstructor, ReactElement, ReactNode } from "react";
 import Grid from "@mui/joy/Grid";
 import Sheet from "@mui/joy/Sheet";
 import Button from "@mui/joy/Button";
 import Switch from '@mui/joy/Switch';
 import Typography from '@mui/joy/Typography';
+import CircularProgress from '@mui/joy/CircularProgress';
+import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import Markdown from 'react-markdown'
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { StateProps } from "./App";
+import { JSX } from "react/jsx-runtime";
 
 function ChatPanelToolbar(props: {newChat: ()=>void,showActivity: boolean, setShowActivity: React.Dispatch<React.SetStateAction<boolean>>}) {
     return (
@@ -114,6 +117,40 @@ function ChatBoxSystem(props: {data: ChatMessage}) {
     )
 }
 
+function ChatBoxStatus(props: {chatAIStatus: ChatAIStatus}) {
+
+    let analysis_status_indicator = (props.chatAIStatus.analysis)?<IoMdCheckmarkCircleOutline />:<CircularProgress color="primary" size="sm" />;
+    let searching_status_indicator = (props.chatAIStatus.searching)?<IoMdCheckmarkCircleOutline />:<CircularProgress color="primary" size="sm" />;
+    let promotion_found_indicator = (props.chatAIStatus.promotionFound)?<IoMdCheckmarkCircleOutline />:<CircularProgress color="primary" size="sm" />;
+
+    let analysis_status = <>กำลังทำความเข้าใจคำถามของคุณ {analysis_status_indicator}</>;
+    let searching_status = (props.chatAIStatus.analysis)?<>กำลังค้นหาโปรโมชั่น {searching_status_indicator}</> : null;
+    let promotion_found_status = (props.chatAIStatus.searching)?<>กำลังคัดเลือกโปรโมชั่นที่เหมาะสม {promotion_found_indicator}</> : null;
+    
+    return (
+        <Sheet sx={{
+            flexGrow: 0,
+            marginTop: "1rem",
+            border: "1px solid #ddd",
+            borderRadius: '15px',
+            padding: '10px',
+            backgroundColor: '#FDE2E4',
+            boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+            maxWidth: '70%',
+            fontFamily: 'Arial, sans-serif',
+            fontSize: '16px',
+            lineHeight: '1.5',
+            alignSelf: "flex-start",
+        }}>
+            {analysis_status} 
+            {(props.chatAIStatus.analysis)?<br/>:null}
+            {searching_status}
+            {(props.chatAIStatus.searching)?<br/>:null}
+            {promotion_found_status}
+        </Sheet>
+    )
+}
+
 function ChatBoxInfo(props: {data: ChatMessage}) {
     return (
         <Sheet sx={{
@@ -149,15 +186,18 @@ type WebSocketMessage = {
 }
 
 
-function ChatWindow(props: {messages: ChatMessage[]}) {
+function ChatWindow(props: {
+    messages: ChatMessage[],
+    chatAIStatus: ChatAIStatus
+}) {
 
-    let renderMessages = props.messages.map((message, index)=>{
+    let renderMessages: ReactElement<any, string | JSXElementConstructor<any>>[] | JSX.Element[] = [];
+    props.messages.forEach((message, index)=>{
         if (message.type === "user") {
-            return <ChatBoxUser key={index} data={message}/>
-        } else if (message.type === "assistant") {
-            return <ChatBoxSystem key={index} data={message}/>
-        } else {
-            return <ChatBoxInfo key={index} data={message}/>
+            renderMessages.push(<ChatBoxUser key={index} data={message}/>);
+        }
+        else if (message.type === "assistant") {
+            renderMessages.push(<ChatBoxSystem key={index} data={message}/>);
         }
     });
 
@@ -173,8 +213,16 @@ function ChatWindow(props: {messages: ChatMessage[]}) {
             height: "60vh",
         }}>
             {renderMessages}
+            {(props.chatAIStatus.processing)?<ChatBoxStatus chatAIStatus={props.chatAIStatus}/>:null}
         </Sheet>
     )
+}
+
+type ChatAIStatus = {
+    processing: boolean,
+    analysis: boolean,
+    searching: boolean,
+    promotionFound: boolean,
 }
 
 export function ChatPanel (props: StateProps & {
@@ -191,6 +239,8 @@ export function ChatPanel (props: StateProps & {
         onClose: ()=> {console.log("ChatPanel: WebSocket disconnected")},
         share: true,
     });
+
+    let [chatAIStatus, setChatAIStatus] = useState<ChatAIStatus>({processing: false, analysis: false, searching: false, promotionFound: false}); // {analysis: false, searching: false
 
     // chatStatus controls the main event loop and should be one of the following:
     // init, running, ready
@@ -211,6 +261,7 @@ export function ChatPanel (props: StateProps & {
         }
 
         sendJsonMessage(request);
+        setChatAIStatus({processing: false, analysis: false, searching: false, promotionFound: false});
     }
 
     // add message event handler. This function will add a new message to the chat thread and set chatStatus to "running"
@@ -230,6 +281,7 @@ export function ChatPanel (props: StateProps & {
         }
         sendJsonMessage(request);
         setChatStatus("running");
+        setChatAIStatus({...chatAIStatus, processing: true});
     }
 
     useEffect(()=>{
@@ -256,11 +308,19 @@ export function ChatPanel (props: StateProps & {
                     let newMessages = [...oldMessages, {type: "system", message: message, streaming: false}];
                     props.setMessages(newMessages);
                     setChatStatus("running");
+                    if (message === "AI ของเราเข้าใจคำถามของคุณแล้ว กรุณารอสักครู่"){
+                        setChatAIStatus({...chatAIStatus, analysis: true});
+                    }else if (message === "กำลังค้นหาโปรโมชั่นที่เหมาะสมสำหรับคุณ"){
+                        setChatAIStatus({...chatAIStatus, searching: true});
+                    }else{
+                        setChatAIStatus({...chatAIStatus, promotionFound: true});
+                    }
                 }else if(message_type === "assistant"){
                     let oldMessages = props.messages;
                     let newMessages = [...oldMessages, {type: "assistant", message: message, streaming: false}];
                     props.setMessages(newMessages);
                     setChatStatus("ready");
+                    setChatAIStatus({processing: false, analysis: false, searching: false, promotionFound: false});
                 }
             }
             else if (lastJsonMessage.type === "chat_delta") {
@@ -292,7 +352,6 @@ export function ChatPanel (props: StateProps & {
                         props.setMessages(newMessages);
                     }
                 }
-
                 setChatStatus("running");
             }
         }
@@ -304,7 +363,7 @@ export function ChatPanel (props: StateProps & {
             paddingRight: "1rem",
         }}>
             <ChatPanelToolbar newChat={newChat} showActivity={props.showActivity} setShowActivity={props.setShowActivity} />
-            <ChatWindow messages={props.messages}/>
+            <ChatWindow messages={props.messages} chatAIStatus={chatAIStatus}/>
             {(chatStatus !== "ready")?<div>ระบบกำลังทำงานอยู่ กรุณารอสักครู่ ✨</div>:null}
             <ChatInputBar addMessage={addMessage} chatStatus={chatStatus}/>
         </Grid>
