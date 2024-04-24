@@ -60,6 +60,8 @@ OPENAI_SPECIALIST_PRODUCT_AGENT_ID=your-agent-id
 OPENAI_SPECIALIST_OCCASION_AGENT_ID=your-agent-id
 OPENAI_SPECIALIST_PLACE_AGENT_ID=your-agent-id
 OPENAI_PROMOTION_SELECTOR_ID=your-agent-id
+OPENAI_ORGANIZATION=your-organization-id
+OPENAI_PROJECT=your-project-id
 OPENAI_API_KEY=your-api-key
 ```
 
@@ -81,3 +83,69 @@ npm start
 Now you should have the promotion search engine, backend server, and frontend development server running. 
 - Access the frontend of KBANK Credit Card Assistant DEMO at http://localhost:3000.
 - Access the Qdrant dashboard UI at http://localhost:6333/dashboard.
+
+
+## Deployment
+
+### Prerequisite
+
+For manual deployment on standard linux server, the following packages are required:
+- docker
+- nginx
+- certbot (optional Let's Encrypt SSL)
+- git
+
+### Build steps
+#### 1. Clone the project repository
+   
+#### 2. Build promotion_search service
+
+Run command
+```bash
+cd promotion_search
+docker build -t promotion-search:latest .
+```
+
+#### 3. Build Frontend app
+```bash
+cd ../www
+npm run build
+docker build -t credit-demo-frontend:latest .
+```
+
+#### 4. Build backend service
+```bash
+cd ../server2
+docker build -t credit-demo-backend:lastest .
+```
+
+#### 5. Configure ENV 
+
+The ```.env``` file should contains the following items
+```
+OPENAI_CONTEXT_AGENT_ID=your-agent-id
+OPENAI_SPECIALIST_PRODUCT_AGENT_ID=your-agent-id
+OPENAI_SPECIALIST_OCCASION_AGENT_ID=your-agent-id
+OPENAI_SPECIALIST_PLACE_AGENT_ID=your-agent-id
+OPENAI_PROMOTION_SELECTOR_ID=your-agent-id
+OPENAI_ORGANIZATION=your-organization-id
+OPENAI_PROJECT=your-project-id
+OPENAI_API_KEY=your-api-key
+```
+
+#### 6. Start services
+```
+cd ..
+docker-compose up -d
+```
+
+#### 7. Migrate data (optional)
+```
+docker exec -it <promotion_search's app id> bash
+python3 src/embedding.py
+python3 src/uploading.py
+```
+
+#### 8. Configure Nginx
+
+

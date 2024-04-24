@@ -1,0 +1,62 @@
+version: '3'
+services:
+  frontend_service:
+    image: credit-demo-frontend:latest
+    ports:
+      - 3000:3000
+    environment:
+    depends_on:
+      - backend_service
+    restart: on-failure
+
+  backend_service:
+    image: credit-demo-backend:latest
+    ports:
+      - 8000:8000
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_UNDERSTANDING_AGENT_ID=${OPENAI_UNDERSTANDING_AGENT_ID}
+      - OPENAI_CONTEXT_AGENT_ID=${OPENAI_CONTEXT_AGENT_ID}
+      - OPENAI_SPECIALIST_PRODUCT_AGENT_ID=${OPENAI_SPECIALIST_PRODUCT_AGENT_ID}
+      - OPENAI_SPECIALIST_OCCASION_AGENT_ID=${OPENAI_SPECIALIST_OCCASION_AGENT_ID}
+      - OPENAI_SPECIALIST_PLACE_AGENT_ID=${OPENAI_SPECIALIST_PLACE_AGENT_ID}
+      - OPENAI_PROMOTION_SELECTOR_ID=${OPENAI_PROMOTION_SELECTOR_ID}
+      - OPENAI_ORGANIZATION=${OPENAI_ORGANIZATION}
+      - OPENAI_PROJECT=${OPENAI_PROJECT}
+    depends_on:
+      - promotion_search
+      - qdrant
+    restart: on-failure
+
+  promotion_search:
+    image: promotion-search:latest
+    ports:
+      - 8001:8001
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+      - OPENAI_EMBEDDING_DIMENSION=3072
+      - OPENAI_EMBEDDING_ENCODING=cl100k_base
+      - OPENAI_MAX_TOKENS_ENCODING=8000
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - QDRANT_URL=qdrant:6334
+      - COLLECTION_NAME=kbank_promotions
+    depends_on:
+      - qdrant
+    restart: on-failure
+
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - 6333:6333
+      - 6334:6334
+    volumes:
+      - db_data:/qdrant/storage:z
+    restart: always
+
+volumes:
+  db_data:
+
+env_file:
+  - path: ./.env
+    required: true
