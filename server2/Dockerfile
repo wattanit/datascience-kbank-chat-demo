@@ -13,7 +13,6 @@ ENV PYTHON_PACKAGES="\
     pydantic \
     python-dotenv \
     requests \
-    onnxruntime \
     qdrant-client \
     openai \
     openai-whisper \

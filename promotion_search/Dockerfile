@@ -35,7 +35,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # COPY * /root/
 COPY data data
 COPY src src
-COPY .env .
+# COPY .env .
 ENTRYPOINT [ "python3", "src/service.py" ]
 
 # RUN chmod a+x /root/slack_noti.sh
