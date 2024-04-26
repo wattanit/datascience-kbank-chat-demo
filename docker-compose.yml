@@ -3,11 +3,12 @@ services:
   frontend_service:
     image: credit-demo-frontend:latest
     ports:
-      - 3000:3000
-    environment:
+      - 3000:80
     depends_on:
       - backend_service
     restart: on-failure
+    networks:
+      - default
 
   backend_service:
     image: credit-demo-backend:latest
@@ -27,6 +28,8 @@ services:
       - promotion_search
       - qdrant
     restart: on-failure
+    networks:
+      - default
 
   promotion_search:
     image: promotion-search:latest
@@ -39,11 +42,13 @@ services:
       - OPENAI_EMBEDDING_ENCODING=cl100k_base
       - OPENAI_MAX_TOKENS_ENCODING=8000
       - QDRANT_API_KEY=${QDRANT_API_KEY}
-      - QDRANT_URL=qdrant:6334
+      - QDRANT_URL=http://qdrant:6334
       - COLLECTION_NAME=kbank_promotions
     depends_on:
       - qdrant
     restart: on-failure
+    networks:
+      - default
 
   qdrant:
     image: qdrant/qdrant
@@ -53,6 +58,13 @@ services:
     volumes:
       - db_data:/qdrant/storage:z
     restart: always
+    networks:
+      - default
 
 volumes:
   db_data:
+
+networks:
+  default:
+    driver: bridge
+    

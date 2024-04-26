@@ -1,0 +1,45 @@
+[
+  {
+    "id": 1,
+    "name": "พรเพชร สุวรรณวงศ์",
+    "password": "password1",
+    "description": "คนธรรมดา",
+    "customer_segment": "วัยกลางคน",
+    "NPL_status": "",
+    "credit_cards": [
+      "KbankThePassion"
+    ]
+  },
+  {
+    "id": 2,
+    "name": "ชนาธิป มณีสุวรรณ",
+    "password": "password2",
+    "description": "คุณนายเจ้าของตลาด",
+    "customer_segment": "วัยเกษียณ",
+    "NPL_status": "",
+    "credit_cards": [
+      "KbankTheWisdom"
+    ]
+  },
+  {
+    "id": 3,
+    "name": "ณัฐพงษ์ ใจดี",
+    "password": "password3",
+    "description": "วัยรุ่นสร้างตัว",
+    "customer_segment": "วัยรุ่น",
+    "NPL_status": "",
+    "credit_cards": [
+      "KbankPLATINUM"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "สุวิทย์ บุญส่ง",
+    "password": "password4",
+    "description": "วัยรุ่น ติดหนี้ล้นตัว",
+    "customer_segment": "วัยรุ่น",
+    "NPL_status": "NPL",
+    "credit_cards": [
+    ]
+  }
+]

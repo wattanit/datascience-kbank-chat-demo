@@ -34,5 +34,6 @@ ENV TZ="Asia/Bangkok"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Copy files into the image
-COPY * /root/server/
-ENTRYPOINT [ "uvicorn", "server.main:app --reload --port 8000" ]
+COPY . /root/server2/
+COPY data/ /root/data/
+ENTRYPOINT [ "uvicorn", "server2.main:app", "--reload", "--port", "8000" ]

@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "user_id": 1,
+        "openai_thread_id": "1234567890",
+        "chat_messages": [],
+        "assistant_logs": [],
+        "status": "done",
+        "chat_context": 0,
+        "last_context": "",
+        "last_promotions": "",
+        "openai_run_id": []
+    }
+]
