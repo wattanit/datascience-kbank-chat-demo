@@ -326,7 +326,7 @@ async def get_promotions(chat, user, websocket: WebSocket):
     # query for promotions
     start_time = time.time()
 
-    response = requests.get("http://localhost:8001/api/search", params={"queries": q})
+    response = requests.get(os.getenv("PROMOTION_SEARCH_URL")+"/api/search", params={"queries": q})
 
     if response.status_code != 200:
         logging.warning(

@@ -24,6 +24,7 @@ services:
       - OPENAI_PROMOTION_SELECTOR_ID=${OPENAI_PROMOTION_SELECTOR_ID}
       - OPENAI_ORGANIZATION=${OPENAI_ORGANIZATION}
       - OPENAI_PROJECT=${OPENAI_PROJECT}
+      - PROMOTION_SEARCH_URL=http://promotion_search:8001
     depends_on:
       - promotion_search
       - qdrant
