@@ -10,7 +10,7 @@ function ChatPage (props: StateProps) {
     let [chatId, setChatId] = useState<number>(0);
     let [messages, setMessages] = useState<ChatMessage[]>([]);
     let [activityReports, setActivityReports] = useState<ActivityReport[]>([]);
-    let [socketUrl, _] = useState<string>("ws://localhost:8000/api/chat-socket");
+    let [socketUrl, _] = useState<string>("ws://"+window.location.hostname+":"+window.location.port+"/api/chat-socket");
     let { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         onOpen: ()=> {console.log("WebSocket connected")},
         onClose: ()=> {console.log("WebSocket disconnected")},
